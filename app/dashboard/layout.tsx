@@ -12,8 +12,11 @@ import {
   Menu,
   X,
   Settings,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useTheme } from 'next-themes'
 
 interface User {
   id: string
@@ -23,11 +26,14 @@ interface User {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     checkAuth()
   }, [])
 
@@ -126,9 +132,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto flex flex-col">
-        <div className="bg-white border-b border-gray-200 p-4 flex items-center gap-3">
-          <img src="/Jinja College badge.png" alt="Jinja College" className="w-8 h-8 object-contain" />
-          <h1 className="text-sm text-gray-600">Electoral Commission Admin Dashboard - Jinja College</h1>
+        <div className="bg-background border-b border-border p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src="/Jinja College badge.png" alt="Jinja College" className="w-8 h-8 object-contain" />
+            <h1 className="text-sm text-muted-foreground">Electoral Commission Admin Dashboard - Jinja College</h1>
+          </div>
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
+          )}
         </div>
         <div className="flex-1 p-6 overflow-auto">{children}</div>
       </main>
