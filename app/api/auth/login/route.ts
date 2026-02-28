@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set('admin_session_token', tokenHash, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true,
       sameSite: 'lax',
       maxAge: 15 * 60, // 15 minutes in seconds
       path: '/',
