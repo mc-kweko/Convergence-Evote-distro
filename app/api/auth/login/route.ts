@@ -5,6 +5,10 @@ export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
 
+    console.log('[DEBUG] Login attempt for:', email);
+    console.log('[DEBUG] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('[DEBUG] Service Role Key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
@@ -22,6 +26,8 @@ export async function POST(request: NextRequest) {
       .eq('email', email)
       .single();
 
+    console.log('[DEBUG] User query result:', { user: !!user, error: userError?.message });
+
     if (userError || !user) {
       console.error('[v0] User not found:', userError);
       return NextResponse.json(
@@ -29,6 +35,8 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    console.log('[DEBUG] User found, checking password');
 
     // Verify password (in production, use bcrypt comparison)
     if (password !== user.password_hash) {
