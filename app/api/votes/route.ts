@@ -1,22 +1,11 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { encryptVote, generateVoteId, hashPin } from '@/lib/security'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerComponentClient({ cookies: () => cookieStore })
-
-    // Check authentication
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const supabase = await createClient()
 
     const body = await request.json()
     const { student_id, voting_pin, candidate_id } = body
@@ -91,7 +80,6 @@ export async function POST(request: NextRequest) {
     await supabase.from('audit_logs').insert({
       action: 'VOTE_CAST',
       details: `Vote recorded for student ${student_id}`,
-      performed_by: session.user.id,
       ip_address: request.headers.get('x-forwarded-for') || 'unknown',
     })
 
@@ -107,17 +95,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerComponentClient({ cookies: () => cookieStore })
-
-    // Check authentication
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const supabase = await createClient()
 
     const { searchParams } = new URL(request.url)
     const candidateId = searchParams.get('candidate_id')

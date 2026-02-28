@@ -1,21 +1,10 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { decryptVote } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerComponentClient({ cookies: () => cookieStore })
-
-    // Check authentication
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const supabase = await createClient()
 
     const body = await request.json()
     const { vote_id, voting_pin } = body
@@ -56,7 +45,6 @@ export async function POST(request: NextRequest) {
       await supabase.from('audit_logs').insert({
         action: 'VOTE_VERIFIED',
         details: `Vote ${vote_id} verified successfully`,
-        performed_by: session.user.id,
       })
 
       return NextResponse.json({
@@ -70,7 +58,6 @@ export async function POST(request: NextRequest) {
       await supabase.from('audit_logs').insert({
         action: 'VOTE_TAMPER_DETECTED',
         details: `Tamper detected on vote ${vote_id}`,
-        performed_by: session.user.id,
       })
 
       return NextResponse.json(

@@ -1,20 +1,9 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerComponentClient({ cookies: () => cookieStore })
-
-    // Check authentication
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const supabase = await createClient()
 
     const body = await request.json()
     const { position_id } = body
@@ -53,7 +42,6 @@ export async function POST(request: NextRequest) {
     await supabase.from('audit_logs').insert({
       action: 'MANUAL_RECOUNT',
       details: `Manual recount performed for position ${position_id}`,
-      performed_by: session.user.id,
       ip_address: request.headers.get('x-forwarded-for') || 'unknown',
     })
 
@@ -64,7 +52,6 @@ export async function POST(request: NextRequest) {
         {
           position_id,
           results: JSON.stringify(results),
-          performed_by: session.user.id,
           verified: false,
         },
       ])
@@ -86,17 +73,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerComponentClient({ cookies: () => cookieStore })
-
-    // Check authentication
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const supabase = await createClient()
 
     const { searchParams } = new URL(request.url)
     const positionId = searchParams.get('position_id')
