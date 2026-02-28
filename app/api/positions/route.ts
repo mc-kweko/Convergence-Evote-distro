@@ -1,0 +1,45 @@
+import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+
+    const { data: positions, error } = await supabase
+      .from('positions')
+      .select('*')
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+
+    return NextResponse.json(positions)
+  } catch (error) {
+    console.error('Error fetching positions:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const body = await request.json()
+    const { name, description, max_votes } = body
+
+    if (!name) {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+    }
+
+    const { data: position, error } = await supabase
+      .from('positions')
+      .insert([{ name, description, max_votes: max_votes || 1 }])
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json(position)
+  } catch (error) {
+    console.error('Error creating position:', error)
+    return NextResponse.json({ error: 'Failed to create position' }, { status: 500 })
+  }
+}
