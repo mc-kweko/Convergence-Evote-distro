@@ -74,15 +74,15 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
     doc.addImage(qrCode, 'PNG', 140, yPosition + 20, 40, 40)
 
     // Add PIN prominently
-    doc.setFontSize(12)
+    doc.setFontSize(16)
     doc.setFont(undefined, 'bold')
     doc.text(`PIN: ${card.pin}`, 15, yPosition + 48)
 
     // Add instructions
     doc.setFontSize(8)
     doc.setFont(undefined, 'normal')
-    doc.text('Scan QR code or visit voting portal', 15, yPosition + 50)
-    doc.text('Keep this PIN confidential', 15, yPosition + 55)
+    doc.text('Scan QR code or visit voting portal', 15, yPosition + 55)
+    doc.text('Keep this PIN confidential', 15, yPosition + 60)
 
     cardIndex++
   }
@@ -100,20 +100,32 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
     format: 'a4',
   })
 
+  // Add badge
+  try {
+    const fs = require('fs')
+    const path = require('path')
+    const badgePath = path.join(process.cwd(), 'public', 'Jinja College badge.png')
+    const badgeBase64 = fs.readFileSync(badgePath, 'base64')
+    doc.addImage(`data:image/png;base64,${badgeBase64}`, 'PNG', 15, 10, 25, 25)
+  } catch (e) {
+    console.error('Badge image not found:', e)
+  }
+
   // Header
   doc.setFontSize(18)
   doc.setFont(undefined, 'bold')
-  const headerText = 'ELECTORAL COMMISSION DECLARATION OF RESULTS'
   const pageWidth = doc.internal.pageSize.getWidth()
-  const textWidth = doc.getTextWidth(headerText)
-  doc.text(headerText, (pageWidth - textWidth) / 2, 20)
+  const headerLine1 = 'ELECTORAL COMMISSION DECLARATION'
+  const headerLine2 = 'OF RESULTS'
+  doc.text(headerLine1, pageWidth / 2, 20, { align: 'center' })
+  doc.text(headerLine2, pageWidth / 2, 28, { align: 'center' })
 
   // Date
   doc.setFontSize(10)
   doc.setFont(undefined, 'normal')
-  doc.text(`Date: ${report.generatedAt.toLocaleDateString()}`, 20, 35)
+  doc.text(`Date: ${report.generatedAt.toLocaleDateString()}`, 20, 45)
 
-  let yPosition = 50
+  let yPosition = 55
 
   for (const position of report.positions) {
     // Check if we need a new page
