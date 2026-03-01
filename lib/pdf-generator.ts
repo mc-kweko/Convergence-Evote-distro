@@ -46,34 +46,37 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
     doc.setLineWidth(0.5)
     doc.rect(10, yPosition, 190, 60)
 
-    // Add school badge (placeholder - will use actual badge if available)
+    // Add school badge
     try {
-      // Note: In production, load the actual badge image from public folder
-      doc.setFontSize(8)
-      doc.text('🎓', 15, yPosition + 8)
+      const fs = require('fs')
+      const path = require('path')
+      const badgePath = path.join(process.cwd(), 'public', 'Jinja College badge.png')
+      const badgeBase64 = fs.readFileSync(badgePath, 'base64')
+      doc.addImage(`data:image/png;base64,${badgeBase64}`, 'PNG', 15, yPosition + 5, 20, 20)
     } catch (e) {
       // Skip if image not available
+      console.error('Badge image not found:', e)
     }
 
     // Add header
     doc.setFontSize(14)
     doc.setFont(undefined, 'bold')
-    doc.text('JINJA COLLEGE VOTING CARD', 105, yPosition + 8, { align: 'center' })
+    doc.text('JINJA COLLEGE VOTING CARD', 105, yPosition + 15, { align: 'center' })
 
     // Add student info
     doc.setFontSize(10)
     doc.setFont(undefined, 'normal')
-    doc.text(`Name: ${card.name}`, 15, yPosition + 20)
-    doc.text(`Student ID: ${card.studentId || 'N/A'}`, 15, yPosition + 28)
+    doc.text(`Name: ${card.name}`, 15, yPosition + 30)
+    doc.text(`Student ID: ${card.studentId || 'N/A'}`, 15, yPosition + 38)
 
     // Generate QR code with voting portal URL
     const qrCode = await QRCode.toDataURL(votingPortalUrl, { width: 200 })
-    doc.addImage(qrCode, 'PNG', 140, yPosition + 10, 40, 40)
+    doc.addImage(qrCode, 'PNG', 140, yPosition + 20, 40, 40)
 
     // Add PIN prominently
     doc.setFontSize(12)
     doc.setFont(undefined, 'bold')
-    doc.text(`PIN: ${card.pin}`, 15, yPosition + 40)
+    doc.text(`PIN: ${card.pin}`, 15, yPosition + 48)
 
     // Add instructions
     doc.setFontSize(8)
