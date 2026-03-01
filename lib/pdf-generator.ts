@@ -31,6 +31,7 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
 
   let cardIndex = 0
   const cardsPerPage = 4
+  const votingPortalUrl = 'https://v0-jinja-college-electoral-system-2.vercel.app/voting'
 
   for (let i = 0; i < cards.length; i++) {
     if (cardIndex > 0 && cardIndex % cardsPerPage === 0) {
@@ -42,27 +43,43 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
 
     // Add border
     doc.setDrawColor(0)
+    doc.setLineWidth(0.5)
     doc.rect(10, yPosition, 190, 60)
+
+    // Add school badge (placeholder - will use actual badge if available)
+    try {
+      // Note: In production, load the actual badge image from public folder
+      doc.setFontSize(8)
+      doc.text('🎓', 15, yPosition + 8)
+    } catch (e) {
+      // Skip if image not available
+    }
 
     // Add header
     doc.setFontSize(14)
     doc.setFont(undefined, 'bold')
-    doc.text('VOTING CARD', 15, yPosition + 8)
+    doc.text('JINJA COLLEGE VOTING CARD', 105, yPosition + 8, { align: 'center' })
 
     // Add student info
     doc.setFontSize(10)
     doc.setFont(undefined, 'normal')
-    doc.text(`Name: ${card.name}`, 15, yPosition + 18)
-    doc.text(`Student ID: ${card.studentId}`, 15, yPosition + 26)
+    doc.text(`Name: ${card.name}`, 15, yPosition + 20)
+    doc.text(`Student ID: ${card.studentId || 'N/A'}`, 15, yPosition + 28)
 
-    // Generate QR code
-    const qrCode = await QRCode.toDataURL(`${card.studentId}:${card.pin}`)
-    doc.addImage(qrCode, 'PNG', 140, yPosition + 10, 35, 35)
+    // Generate QR code with voting portal URL
+    const qrCode = await QRCode.toDataURL(votingPortalUrl, { width: 200 })
+    doc.addImage(qrCode, 'PNG', 140, yPosition + 10, 40, 40)
 
-    // Add PIN
+    // Add PIN prominently
     doc.setFontSize(12)
     doc.setFont(undefined, 'bold')
-    doc.text(`PIN: ${card.pin}`, 15, yPosition + 52)
+    doc.text(`PIN: ${card.pin}`, 15, yPosition + 40)
+
+    // Add instructions
+    doc.setFontSize(8)
+    doc.setFont(undefined, 'normal')
+    doc.text('Scan QR code or visit voting portal', 15, yPosition + 50)
+    doc.text('Keep this PIN confidential', 15, yPosition + 55)
 
     cardIndex++
   }

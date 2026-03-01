@@ -1,135 +1,188 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, LogIn } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Search } from 'lucide-react'
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+interface Student {
+  id: string
+  student_id: string
+  name: string
+  email: string
+  class: string
+  has_voted: boolean
+}
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+export default function VotingPortalPage() {
+  const router = useRouter()
+  const [students, setStudents] = useState<Student[]>([])
+  const [search, setSearch] = useState('')
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    fetchStudents()
+  }, [])
+
+  const fetchStudents = async () => {
+    try {
+      const res = await fetch('/api/students')
+      if (!res.ok) throw new Error('Failed to fetch students')
+      const data = await res.json()
+      setStudents(data)
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
+
+  const filteredStudents = students.filter(s =>
+    s.name?.toLowerCase().includes(search.toLowerCase()) ||
+    s.student_id?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedStudent || !pin) return
+
+    setLoading(true)
+    setError('')
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const res = await fetch('/api/voting/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+        body: JSON.stringify({
+          student_id: selectedStudent.id,
+          pin: pin,
+        }),
+      })
 
-      const data = await response.json();
+      const data = await res.json()
 
-      if (!response.ok) {
-        setError(data.error || 'Login failed');
-        return;
+      if (!res.ok) {
+        setError(data.error || 'Invalid PIN')
+        return
       }
 
-      // Redirect to dashboard
-      router.push('/dashboard');
-    } catch (err) {
-      setError('An error occurred during login');
-      console.error('[v0] Login error:', err);
+      router.push('/vote')
+    } catch (error) {
+      setError('Login failed. Please try again.')
     } finally {
-      setIsLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo and Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
-            <img src="/Jinja College badge.png" alt="Jinja College" className="w-24 h-24 object-contain" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <img src="/Jinja College badge.png" alt="Jinja College" className="w-20 h-20 object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Electoral Commission</h1>
-          <p className="text-slate-400">Jinja College Admin Dashboard</p>
-        </div>
+          <CardTitle className="text-3xl">Student Voting Portal</CardTitle>
+          <p className="text-muted-foreground">Jinja College Electoral Commission</p>
+        </CardHeader>
 
-        {/* Login Card */}
-        <Card className="border-0 shadow-2xl bg-slate-800/50 backdrop-blur">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-white">Sign In</CardTitle>
-            <CardDescription className="text-slate-400">
-              Enter your credentials to access the admin dashboard
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            {error && (
-              <Alert className="mb-6 border-red-500/20 bg-red-500/10">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <AlertDescription className="text-red-500">{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-200">
-                  Email Address
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@jinjacollege.edu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  className="bg-slate-700/50 border-slate-600 text-white placeholder-slate-500 focus:border-blue-500"
-                />
+        <CardContent className="space-y-6">
+          {!selectedStudent ? (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Search Your Name</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Type your name or student ID..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-200">
-                  Password
-                </Label>
+              {search && (
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  {filteredStudents.length === 0 ? (
+                    <p className="text-center py-4 text-muted-foreground">No students found</p>
+                  ) : (
+                    filteredStudents.map((student) => (
+                      <button
+                        key={student.id}
+                        onClick={() => setSelectedStudent(student)}
+                        className="w-full text-left p-4 hover:bg-muted border-b last:border-b-0 transition-colors"
+                        disabled={student.has_voted}
+                      >
+                        <p className="font-medium">{student.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {student.student_id || '-'}
+                          {student.class && ` • ${student.class}`}
+                        </p>
+                        {student.has_voted && (
+                          <span className="text-xs text-green-600 font-medium">✓ Already Voted</span>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="bg-muted p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Selected Student</p>
+                <p className="font-bold text-lg">{selectedStudent.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedStudent.student_id || '-'}
+                  {selectedStudent.class && ` • ${selectedStudent.class}`}
+                </p>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedStudent(null)
+                    setPin('')
+                    setError('')
+                  }}
+                  className="mt-2 p-0 h-auto"
+                >
+                  Change Student
+                </Button>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Enter Your PIN</label>
                 <Input
-                  id="password"
                   type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter 6-digit PIN"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  maxLength={6}
+                  className="text-center text-2xl tracking-widest"
                   required
-                  disabled={isLoading}
-                  className="bg-slate-700/50 border-slate-600 text-white placeholder-slate-500 focus:border-blue-500"
                 />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Enter the PIN from your voting card
+                </p>
               </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-10"
-              >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? 'Logging in...' : 'Login to Vote'}
               </Button>
             </form>
-
-            <div className="mt-6 pt-6 border-t border-slate-700">
-              <p className="text-xs text-slate-400 text-center">
-                This is a secure admin-only system. Unauthorized access is prohibited.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Footer Info */}
-        <div className="mt-8 text-center text-sm text-slate-500">
-          <p>Jinja College Electoral Commission © 2024</p>
-          <p className="mt-1">Desktop version only</p>
-        </div>
-      </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
-  );
+  )
 }
