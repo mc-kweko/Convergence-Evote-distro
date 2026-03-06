@@ -1,10 +1,10 @@
 import crypto from 'crypto'
 
 /**
- * Generate a secure 6-digit PIN
+ * Generate a secure 8-digit PIN
  */
 export function generateSecurePin(): string {
-  return crypto.randomInt(100000, 999999).toString()
+  return crypto.randomInt(10000000, 99999999).toString()
 }
 
 /**

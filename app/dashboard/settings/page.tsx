@@ -3,12 +3,62 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertTriangle, RefreshCw, Trash2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { AlertTriangle, RefreshCw, Trash2, Lock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function SettingsPage() {
   const router = useRouter()
   const [resetting, setResetting] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess('')
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters')
+      return
+    }
+
+    setChangingPassword(true)
+
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setPasswordError(data.error || 'Failed to change password')
+        return
+      }
+
+      setPasswordSuccess('Password changed successfully!')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (error) {
+      setPasswordError('Failed to change password')
+    } finally {
+      setChangingPassword(false)
+    }
+  }
 
   const handleResetSystem = async () => {
     if (!confirm('⚠️ WARNING: This will delete ALL election data including students, positions, candidates, and votes. This action CANNOT be undone!')) {
@@ -91,6 +141,65 @@ export default function SettingsPage() {
           <p className="text-muted-foreground">Manage election system and data</p>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Lock className="w-5 h-5" />
+            <CardTitle>Change Password</CardTitle>
+          </div>
+          <CardDescription>
+            Update your admin account password
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            {passwordError && (
+              <div className="bg-red-50 border border-red-200 text-red-800 p-3 rounded-lg text-sm">
+                {passwordError}
+              </div>
+            )}
+            {passwordSuccess && (
+              <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-lg text-sm">
+                {passwordSuccess}
+              </div>
+            )}
+            <Button type="submit" disabled={changingPassword}>
+              {changingPassword ? 'Changing Password...' : 'Change Password'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <Card className="border-yellow-200 bg-yellow-50">
         <CardHeader>

@@ -158,10 +158,10 @@ export default function VotingPortalPage() {
                 <label className="text-sm font-medium mb-2 block">Enter Your PIN</label>
                 <Input
                   type="password"
-                  placeholder="Enter 6-digit PIN"
+                  placeholder="Enter 8-digit PIN"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  maxLength={6}
+                  maxLength={8}
                   className="text-center text-2xl tracking-widest"
                   required
                 />
