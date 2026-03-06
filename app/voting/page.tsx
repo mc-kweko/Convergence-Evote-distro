@@ -26,12 +26,30 @@ export default function VotingLoginPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    fetchStudents()
+    // Removed initial fetch for performance
   }, [])
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search.length >= 2) {
+        searchStudents(search)
+      } else {
+        setStudents([])
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
   const fetchStudents = async () => {
+    // Don't fetch all students upfront for performance
+    // Students will be searched on-demand
+  }
+
+  const searchStudents = async (query: string) => {
+    if (query.length < 2) return
+    
     try {
-      const res = await fetch('/api/students')
+      const res = await fetch(`/api/students?search=${encodeURIComponent(query)}&limit=20`)
       if (!res.ok) throw new Error('Failed to fetch students')
       const data = await res.json()
       setStudents(data)
