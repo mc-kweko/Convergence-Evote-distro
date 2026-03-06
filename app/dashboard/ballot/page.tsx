@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Plus, Trash2, Upload } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Plus, Trash2, Upload, Eye, Edit, X } from 'lucide-react'
 
 interface Position {
   id: string
@@ -32,6 +33,11 @@ export default function BallotSetupPage() {
     stream: string
     image: File | null
   }>>([])
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
+  const [positionCandidates, setPositionCandidates] = useState<Candidate[]>([])
+  const [showPreview, setShowPreview] = useState(false)
+  const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null)
+  const [editForm, setEditForm] = useState({ name: '', student_id: '', manifesto: '' })
 
   useEffect(() => {
     fetchPositions()
@@ -48,6 +54,94 @@ export default function BallotSetupPage() {
       console.error('Error fetching positions:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCandidates = async (positionId: string) => {
+    try {
+      const res = await fetch(`/api/candidates?position_id=${positionId}`)
+      if (!res.ok) throw new Error('Failed to fetch candidates')
+      const data = await res.json()
+      console.log('Fetched candidates:', data)
+      setPositionCandidates(data)
+    } catch (error) {
+      console.error('Error fetching candidates:', error)
+    }
+  }
+
+  const handleViewPosition = async (position: Position) => {
+    setSelectedPosition(position)
+    await fetchCandidates(position.id)
+    setShowPreview(true)
+  }
+
+  const handleDeletePosition = async (positionId: string) => {
+    if (!confirm('Are you sure you want to delete this position? All candidates will also be deleted.')) return
+    
+    try {
+      const res = await fetch(`/api/positions/${positionId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete position')
+      alert('Position deleted successfully')
+      fetchPositions()
+    } catch (error) {
+      console.error('Error deleting position:', error)
+      alert('Failed to delete position')
+    }
+  }
+
+  const handleEditCandidate = (candidate: Candidate) => {
+    setEditingCandidate(candidate)
+    setEditForm({
+      name: candidate.name,
+      student_id: candidate.student_id,
+      manifesto: candidate.manifesto || ''
+    })
+  }
+
+  const handleUpdateCandidate = async () => {
+    if (!editingCandidate) return
+    
+    try {
+      const res = await fetch(`/api/candidates/${editingCandidate.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      })
+      if (!res.ok) throw new Error('Failed to update candidate')
+      alert('Candidate updated successfully')
+      setEditingCandidate(null)
+      if (selectedPosition) await fetchCandidates(selectedPosition.id)
+    } catch (error) {
+      console.error('Error updating candidate:', error)
+      alert('Failed to update candidate')
+    }
+  }
+
+  const handleDeleteCandidate = async (candidateId: string) => {
+    if (!candidateId || candidateId === 'undefined') {
+      alert('Invalid candidate ID')
+      return
+    }
+    
+    if (!confirm('Are you sure you want to delete this candidate?')) return
+    
+    console.log('Deleting candidate with ID:', candidateId)
+    
+    try {
+      const res = await fetch(`/api/candidates/${candidateId}`, { method: 'DELETE' })
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `HTTP ${res.status}: ${res.statusText}`)
+      }
+      
+      const result = await res.json()
+      alert('Candidate deleted successfully')
+      if (selectedPosition) await fetchCandidates(selectedPosition.id)
+    } catch (error) {
+      console.error('Error deleting candidate:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete candidate'
+      alert(`Failed to delete candidate: ${errorMessage}`)
     }
   }
 
@@ -253,13 +347,30 @@ export default function BallotSetupPage() {
               {positions.map((position) => (
                 <div
                   key={position.id}
-                  className="flex justify-between items-center p-3 border rounded-lg"
+                  className="flex justify-between items-center p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
                 >
-                  <div>
+                  <div onClick={() => handleViewPosition(position)} className="flex-1">
                     <p className="font-medium">{position.name}</p>
                     {position.description && (
                       <p className="text-sm text-muted-foreground">{position.description}</p>
                     )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewPosition(position)}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Preview
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeletePosition(position.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -267,6 +378,110 @@ export default function BallotSetupPage() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">
+              Ballot Preview: {selectedPosition?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-2">Position</p>
+              <h3 className="text-xl font-bold">{selectedPosition?.name}</h3>
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="font-semibold">Candidates ({positionCandidates.length})</h4>
+              </div>
+              
+              {positionCandidates.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No candidates added yet</p>
+              ) : (
+                <div className="grid gap-4">
+                  {positionCandidates.map((candidate) => (
+                    <Card key={candidate.id} className="border-2">
+                      <CardContent className="pt-6">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h5 className="font-bold text-lg">{candidate.name}</h5>
+                            <p className="text-sm text-muted-foreground">ID: {candidate.student_id}</p>
+                            {candidate.manifesto && (
+                              <p className="text-sm mt-2">{candidate.manifesto}</p>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditCandidate(candidate)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteCandidate(candidate.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPreview(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingCandidate} onOpenChange={() => setEditingCandidate(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Candidate</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Candidate Name</Label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Student ID</Label>
+              <Input
+                value={editForm.student_id}
+                onChange={(e) => setEditForm({ ...editForm, student_id: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Manifesto</Label>
+              <Input
+                value={editForm.manifesto}
+                onChange={(e) => setEditForm({ ...editForm, manifesto: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCandidate(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateCandidate}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

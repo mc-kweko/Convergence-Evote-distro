@@ -78,7 +78,7 @@ export default function VotingPortalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">

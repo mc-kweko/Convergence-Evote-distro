@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('candidates')
-      .select('*, position:positions(*)')
+      .select('id, position_id, name, student_id, manifesto, photo_url, created_at')
 
     if (positionId) {
       query = query.eq('position_id', positionId)
@@ -17,8 +17,12 @@ export async function GET(request: NextRequest) {
 
     const { data: candidates, error } = await query
 
-    if (error) throw error
+    if (error) {
+      console.error('Database error fetching candidates:', error)
+      throw error
+    }
 
+    console.log('Candidates fetched:', candidates)
     return NextResponse.json(candidates)
   } catch (error) {
     console.error('Error fetching candidates:', error)

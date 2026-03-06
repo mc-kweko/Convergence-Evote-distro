@@ -9,7 +9,15 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('candidates')
-      .select('*, position:positions(id, name)')
+      .select(`
+        id,
+        name,
+        vote_count,
+        position:positions(
+          id,
+          name
+        )
+      `)
       .order('vote_count', { ascending: false })
 
     if (positionId) {
@@ -18,11 +26,14 @@ export async function GET(request: NextRequest) {
 
     const { data: candidates, error } = await query
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error:', error)
+      throw error
+    }
 
     return NextResponse.json(candidates || [])
   } catch (error) {
     console.error('Error fetching results:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', details: error }, { status: 500 })
   }
 }
