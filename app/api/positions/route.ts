@@ -29,17 +29,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
     }
 
+    // Check if position already exists
+    const { data: existing } = await supabase
+      .from('positions')
+      .select('id')
+      .eq('name', name)
+      .single()
+
+    if (existing) {
+      return NextResponse.json({ error: 'A position with this name already exists' }, { status: 400 })
+    }
+
     const { data: position, error } = await supabase
       .from('positions')
       .insert([{ name, description, max_votes: max_votes || 1 }])
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase error:', error)
+      if (error.code === '23505') {
+        return NextResponse.json({ error: 'A position with this name already exists' }, { status: 400 })
+      }
+      return NextResponse.json({ error: error.message || 'Database error' }, { status: 500 })
+    }
 
     return NextResponse.json(position)
   } catch (error) {
     console.error('Error creating position:', error)
-    return NextResponse.json({ error: 'Failed to create position' }, { status: 500 })
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Failed to create position' 
+    }, { status: 500 })
   }
 }

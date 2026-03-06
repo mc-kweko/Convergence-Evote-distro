@@ -126,13 +126,19 @@ export default function VotePage() {
                     }`}
                   >
                     <div className="flex items-center gap-4 text-left">
-                      {candidate.photo_url && (
-                        <img
-                          src={candidate.photo_url}
-                          alt={candidate.name}
-                          className="w-16 h-16 rounded-full object-cover"
-                        />
-                      )}
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-muted flex-shrink-0">
+                        {candidate.photo_url ? (
+                          <img
+                            src={candidate.photo_url}
+                            alt={candidate.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-muted-foreground">
+                            {candidate.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
                       <div>
                         <p className="font-bold text-lg">{candidate.name}</p>
                         <p className="text-sm text-muted-foreground">{candidate.manifesto}</p>

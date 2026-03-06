@@ -20,7 +20,7 @@ interface Candidate {
   name: string
   student_id: string
   manifesto: string
-  photo_url: string
+  photo_url: string | null
 }
 
 export default function BallotSetupPage() {
@@ -32,6 +32,7 @@ export default function BallotSetupPage() {
     class: string
     stream: string
     image: File | null
+    imagePreview: string | null
   }>>([])
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null)
   const [positionCandidates, setPositionCandidates] = useState<Candidate[]>([])
@@ -146,7 +147,7 @@ export default function BallotSetupPage() {
   }
 
   const addCandidate = () => {
-    setCandidates([...candidates, { name: '', class: '', stream: '', image: null }])
+    setCandidates([...candidates, { name: '', class: '', stream: '', image: null, imagePreview: null }])
   }
 
   const removeCandidate = (index: number) => {
@@ -155,7 +156,15 @@ export default function BallotSetupPage() {
 
   const updateCandidate = (index: number, field: string, value: any) => {
     const updated = [...candidates]
-    updated[index] = { ...updated[index], [field]: value }
+    if (field === 'image' && value instanceof File) {
+      updated[index] = { 
+        ...updated[index], 
+        image: value,
+        imagePreview: URL.createObjectURL(value)
+      }
+    } else {
+      updated[index] = { ...updated[index], [field]: value }
+    }
     setCandidates(updated)
   }
 
@@ -199,6 +208,19 @@ export default function BallotSetupPage() {
         if (!candRes.ok) {
           const errorData = await candRes.json()
           throw new Error(errorData.error || 'Failed to create candidate')
+        }
+
+        const createdCandidate = await candRes.json()
+
+        if (candidate.image) {
+          const formData = new FormData()
+          formData.append('file', candidate.image)
+          formData.append('candidateId', createdCandidate.id)
+          
+          await fetch('/api/candidates/upload', {
+            method: 'POST',
+            body: formData,
+          })
         }
       }
 
@@ -307,17 +329,38 @@ export default function BallotSetupPage() {
                             </div>
 
                             <div>
-                              <Label>Image (Optional)</Label>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) =>
-                                    updateCandidate(index, 'image', e.target.files?.[0] || null)
-                                  }
-                                />
+                              <Label>Candidate Photo</Label>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <label className="flex-1">
+                                    <div className="flex items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent transition-colors">
+                                      {candidate.imagePreview ? (
+                                        <img 
+                                          src={candidate.imagePreview} 
+                                          alt="Preview" 
+                                          className="h-full w-full object-cover rounded-lg"
+                                        />
+                                      ) : (
+                                        <div className="text-center">
+                                          <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                                          <p className="text-sm text-muted-foreground">Click to upload photo</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <Input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={(e) =>
+                                        updateCandidate(index, 'image', e.target.files?.[0] || null)
+                                      }
+                                    />
+                                  </label>
+                                </div>
                                 {candidate.image && (
-                                  <span className="text-sm text-green-600">✓</span>
+                                  <p className="text-xs text-green-600 flex items-center gap-1">
+                                    ✓ {candidate.image.name}
+                                  </p>
                                 )}
                               </div>
                             </div>
@@ -404,7 +447,14 @@ export default function BallotSetupPage() {
                   {positionCandidates.map((candidate) => (
                     <Card key={candidate.id} className="border-2">
                       <CardContent className="pt-6">
-                        <div className="flex justify-between items-start">
+                        <div className="flex gap-4">
+                          {candidate.photo_url && (
+                            <img 
+                              src={candidate.photo_url} 
+                              alt={candidate.name}
+                              className="w-24 h-24 object-cover rounded-lg"
+                            />
+                          )}
                           <div className="flex-1">
                             <h5 className="font-bold text-lg">{candidate.name}</h5>
                             <p className="text-sm text-muted-foreground">ID: {candidate.student_id}</p>
