@@ -125,9 +125,9 @@ export default function AdminLoginPage() {
         </Card>
 
         {/* Footer Info */}
-        <div className="mt-8 text-center text-sm text-slate-500">
-          <p>Jinja College Electoral Commission © 2024</p>
-          <p className="mt-1">Desktop version only</p>
+        <div className="mt-8 text-center text-sm text-slate-500 space-y-1">
+          <p>Built by Jinja College ICT Club</p>
+          <p>© {new Date().getFullYear()} Jinja College Electoral Commission</p>
         </div>
       </div>
     </div>

@@ -175,6 +175,12 @@ export default function VotePage() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Footer Branding */}
+        <div className="text-center text-sm text-muted-foreground pb-8 space-y-1">
+          <p>Built by Jinja College ICT Club</p>
+          <p>© {new Date().getFullYear()} Jinja College. All rights reserved.</p>
+        </div>
       </div>
     </div>
   )

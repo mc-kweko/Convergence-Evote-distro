@@ -35,7 +35,7 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
 
   let cardIndex = 0
   const cardsPerPage = 4
-  const votingPortalUrl = 'https://v0-jinja-college-electoral-system-2.vercel.app/voting'
+  const votingPortalUrl = 'https://jicovote.vercel.app'
 
   for (let i = 0; i < cards.length; i++) {
     if (cardIndex > 0 && cardIndex % cardsPerPage === 0) {
@@ -85,11 +85,21 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
     // Add instructions
     doc.setFontSize(8)
     doc.setFont(undefined, 'normal')
-    doc.text('Scan QR code or visit voting portal', 15, yPosition + 55)
-    doc.text('Keep this PIN confidential', 15, yPosition + 60)
+    doc.text('Scan QR code or visit voting portal', 15, yPosition + 54)
+    doc.text('Keep this PIN confidential', 15, yPosition + 58)
+    
+    // Add copyright at bottom center
+    doc.text(`\u00a9 ${new Date().getFullYear()} Jinja College`, 105, yPosition + 58, { align: 'center' })
 
     cardIndex++
   }
+
+  // Add footer branding on last page
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const pageWidth = doc.internal.pageSize.getWidth()
+  doc.setFontSize(7)
+  doc.setTextColor(100, 100, 100)
+  doc.text(`Built by Jinja College ICT Club | \u00a9 ${new Date().getFullYear()} Jinja College`, pageWidth / 2, pageHeight - 5, { align: 'center' })
 
   return Buffer.from(doc.output('arraybuffer'))
 }
@@ -244,7 +254,7 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   }
 
   // Signature section at bottom
-  const bottomY = doc.internal.pageSize.getHeight() - 40
+  const bottomY = doc.internal.pageSize.getHeight() - 50
   doc.setFontSize(10)
   doc.setFont(undefined, 'normal')
   doc.text('Approved by Chairperson, Electoral Commission', 20, bottomY)
@@ -254,6 +264,13 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   doc.setFontSize(9)
   doc.text('Signature', 20, bottomY + 20)
   doc.text('Date: _______________', 120, bottomY + 20)
+
+  // Footer branding
+  const footerY = doc.internal.pageSize.getHeight() - 15
+  doc.setFontSize(8)
+  doc.setTextColor(100, 100, 100)
+  doc.text('Built by Jinja College ICT Club', pageWidth / 2, footerY, { align: 'center' })
+  doc.text(`\u00a9 ${new Date().getFullYear()} Jinja College. All rights reserved.`, pageWidth / 2, footerY + 4, { align: 'center' })
 
   return Buffer.from(doc.output('arraybuffer'))
 }

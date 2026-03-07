@@ -32,6 +32,12 @@ export default function VotingSuccessPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Footer Branding */}
+      <div className="absolute bottom-8 left-0 right-0 text-center text-sm text-green-200 space-y-1">
+        <p>Built by Jinja College ICT Club</p>
+        <p>© {new Date().getFullYear()} Jinja College. All rights reserved.</p>
+      </div>
     </div>
   )
 }

@@ -79,14 +79,15 @@ export default function VotingPortalPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <img src="/Jinja College badge.png" alt="Jinja College" className="w-20 h-20 object-contain" />
-          </div>
-          <CardTitle className="text-3xl">Student Voting Portal</CardTitle>
-          <p className="text-muted-foreground">Jinja College Electoral Commission</p>
-        </CardHeader>
+      <div className="w-full max-w-2xl">
+        <Card className="w-full">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <img src="/Jinja College badge.png" alt="Jinja College" className="w-20 h-20 object-contain" />
+            </div>
+            <CardTitle className="text-3xl">Student Voting Portal</CardTitle>
+            <p className="text-muted-foreground">Jinja College Electoral Commission</p>
+          </CardHeader>
 
         <CardContent className="space-y-6">
           {!selectedStudent ? (
@@ -183,6 +184,13 @@ export default function VotingPortalPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Footer Branding */}
+      <div className="text-center text-sm text-slate-400 mt-6 space-y-1">
+        <p>Built by Jinja College ICT Club</p>
+        <p>© {new Date().getFullYear()} Jinja College. All rights reserved.</p>
+      </div>
+      </div>
     </div>
   )
 }
