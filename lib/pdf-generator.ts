@@ -10,8 +10,12 @@ interface VotingCard {
 interface ResultsReport {
   electionName: string
   generatedAt: Date
+  pollDate?: Date
+  totalEligibleVoters: number
+  totalVotesCast: number
   positions: Array<{
     title: string
+    totalValidVotes: number
     candidates: Array<{
       name: string
       voteCount: number
@@ -120,53 +124,128 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   doc.text(headerLine1, pageWidth / 2, 20, { align: 'center' })
   doc.text(headerLine2, pageWidth / 2, 28, { align: 'center' })
 
-  // Date
+  // Date and Poll Information
   doc.setFontSize(10)
   doc.setFont(undefined, 'normal')
-  doc.text(`Date: ${report.generatedAt.toLocaleDateString()}`, 20, 45)
+  doc.text(`Declaration Date: ${report.generatedAt.toLocaleDateString()}`, 20, 45)
+  if (report.pollDate) {
+    doc.text(`Poll Date: ${report.pollDate.toLocaleDateString()}`, 20, 50)
+  }
 
-  let yPosition = 55
+  // Turnout Summary Box
+  let yPosition = report.pollDate ? 58 : 53
+  doc.setFillColor(240, 240, 240)
+  doc.rect(20, yPosition, 170, 20, 'F')
+  doc.setDrawColor(100, 100, 100)
+  doc.rect(20, yPosition, 170, 20)
+  
+  doc.setFontSize(9)
+  doc.setFont(undefined, 'bold')
+  doc.text('ELECTION TURNOUT SUMMARY', 105, yPosition + 5, { align: 'center' })
+  doc.setFont(undefined, 'normal')
+  const turnoutRate = report.totalEligibleVoters > 0 
+    ? ((report.totalVotesCast / report.totalEligibleVoters) * 100).toFixed(1)
+    : '0.0'
+  doc.text(`Eligible Voters: ${report.totalEligibleVoters}`, 25, yPosition + 11)
+  doc.text(`Votes Cast: ${report.totalVotesCast}`, 25, yPosition + 16)
+  doc.text(`Turnout: ${turnoutRate}%`, 120, yPosition + 11)
+  
+  yPosition += 28
 
   for (const position of report.positions) {
     // Check if we need a new page
-    if (yPosition > 240) {
+    if (yPosition > 220) {
       doc.addPage()
       yPosition = 20
     }
 
     // Position title
-    doc.setFontSize(14)
+    doc.setFontSize(12)
     doc.setFont(undefined, 'bold')
-    doc.text(position.title, 20, yPosition)
-    yPosition += 10
-
-    // Table header
-    doc.setFontSize(10)
-    doc.setFont(undefined, 'bold')
-    doc.text('Rank', 20, yPosition)
-    doc.text('Candidate Name', 40, yPosition)
-    doc.text('Votes', 150, yPosition)
-    doc.line(20, yPosition + 2, 190, yPosition + 2)
-    yPosition += 8
+    doc.text(position.title.toUpperCase(), 20, yPosition)
+    yPosition += 7
 
     // Sort candidates by vote count
     const sorted = [...position.candidates].sort((a, b) => b.voteCount - a.voteCount)
+    const totalVotes = position.totalValidVotes || sorted.reduce((sum, c) => sum + c.voteCount, 0)
 
-    // Candidates table
+    // Table header with borders
+    doc.setFillColor(220, 220, 220)
+    doc.rect(20, yPosition, 170, 8, 'F')
+    doc.setDrawColor(100, 100, 100)
+    doc.setLineWidth(0.3)
+    
+    // Header borders
+    doc.rect(20, yPosition, 15, 8) // Rank
+    doc.rect(35, yPosition, 85, 8) // Name
+    doc.rect(120, yPosition, 25, 8) // Votes
+    doc.rect(145, yPosition, 25, 8) // Percentage
+    doc.rect(170, yPosition, 20, 8) // Status
+    
+    doc.setFontSize(9)
+    doc.setFont(undefined, 'bold')
+    doc.text('Rank', 27.5, yPosition + 5.5, { align: 'center' })
+    doc.text('Candidate Name', 37, yPosition + 5.5)
+    doc.text('Votes', 132.5, yPosition + 5.5, { align: 'center' })
+    doc.text('Percentage', 157.5, yPosition + 5.5, { align: 'center' })
+    doc.text('Status', 180, yPosition + 5.5, { align: 'center' })
+    yPosition += 8
+
+    // Candidates rows
     doc.setFont(undefined, 'normal')
     sorted.forEach((candidate, index) => {
-      doc.text(`${index + 1}`, 20, yPosition)
-      doc.text(candidate.name, 40, yPosition)
-      doc.text(candidate.voteCount.toString(), 150, yPosition)
+      const percentage = totalVotes > 0 ? ((candidate.voteCount / totalVotes) * 100).toFixed(1) : '0.0'
+      const isWinner = index === 0
+      
+      // Alternate row colors
+      if (index % 2 === 0) {
+        doc.setFillColor(250, 250, 250)
+        doc.rect(20, yPosition, 170, 7, 'F')
+      }
+      
+      // Row borders
+      doc.rect(20, yPosition, 15, 7)
+      doc.rect(35, yPosition, 85, 7)
+      doc.rect(120, yPosition, 25, 7)
+      doc.rect(145, yPosition, 25, 7)
+      doc.rect(170, yPosition, 20, 7)
+      
+      // Content
+      doc.text(`${index + 1}`, 27.5, yPosition + 5, { align: 'center' })
+      doc.text(candidate.name, 37, yPosition + 5)
+      doc.text(candidate.voteCount.toString(), 132.5, yPosition + 5, { align: 'center' })
+      doc.text(`${percentage}%`, 157.5, yPosition + 5, { align: 'center' })
+      
+      if (isWinner) {
+        doc.setFont(undefined, 'bold')
+        doc.text('✓', 180, yPosition + 5, { align: 'center' })
+        doc.setFont(undefined, 'normal')
+      }
+      
       yPosition += 7
     })
 
-    yPosition += 10
+    // Total row
+    doc.setFillColor(240, 240, 240)
+    doc.rect(20, yPosition, 170, 7, 'F')
+    doc.rect(20, yPosition, 15, 7)
+    doc.rect(35, yPosition, 85, 7)
+    doc.rect(120, yPosition, 25, 7)
+    doc.rect(145, yPosition, 25, 7)
+    doc.rect(170, yPosition, 20, 7)
+    
+    doc.setFont(undefined, 'bold')
+    doc.text('TOTAL', 37, yPosition + 5)
+    doc.text(totalVotes.toString(), 132.5, yPosition + 5, { align: 'center' })
+    doc.text('100.0%', 157.5, yPosition + 5, { align: 'center' })
+    doc.setFont(undefined, 'normal')
+    
+    yPosition += 15
   }
 
   // Signature section at bottom
   const bottomY = doc.internal.pageSize.getHeight() - 40
-  doc.setFontSize(11)
+  doc.setFontSize(10)
   doc.setFont(undefined, 'normal')
   doc.text('Approved by Chairperson, Electoral Commission', 20, bottomY)
   
@@ -174,6 +253,7 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   doc.line(20, bottomY + 15, 100, bottomY + 15)
   doc.setFontSize(9)
   doc.text('Signature', 20, bottomY + 20)
+  doc.text('Date: _______________', 120, bottomY + 20)
 
   return Buffer.from(doc.output('arraybuffer'))
 }

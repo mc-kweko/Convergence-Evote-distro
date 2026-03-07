@@ -6,6 +6,17 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
 
+    // Get total eligible voters
+    const { count: totalEligibleVoters } = await supabase
+      .from('students')
+      .select('*', { count: 'exact', head: true })
+
+    // Get total votes cast
+    const { count: totalVotesCast } = await supabase
+      .from('students')
+      .select('*', { count: 'exact', head: true })
+      .eq('has_voted', true)
+
     const { data: positions, error: posError } = await supabase
       .from('positions')
       .select('*')
@@ -23,8 +34,11 @@ export async function GET(request: NextRequest) {
 
       if (candError) throw candError
 
+      const totalValidVotes = candidates.reduce((sum: number, c: any) => sum + (c.vote_count || 0), 0)
+
       reportPositions.push({
         title: position.name,
+        totalValidVotes,
         candidates: candidates.map((c: any) => ({
           name: c.name,
           voteCount: c.vote_count || 0,
@@ -35,6 +49,9 @@ export async function GET(request: NextRequest) {
     const pdfBuffer = await generateResultsPdf({
       electionName: 'Jinja College Electoral Commission',
       generatedAt: new Date(),
+      pollDate: new Date(),
+      totalEligibleVoters: totalEligibleVoters || 0,
+      totalVotesCast: totalVotesCast || 0,
       positions: reportPositions,
     })
 
