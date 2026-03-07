@@ -180,9 +180,9 @@ export default function StudentsPage() {
   }
 
   const filteredStudents = students.filter((s) =>
-    s.name.toLowerCase().includes(searching.toLowerCase()) ||
-    s.student_id.includes(searching) ||
-    s.email.toLowerCase().includes(searching.toLowerCase())
+    s.name?.toLowerCase().includes(searching.toLowerCase()) ||
+    s.student_id?.includes(searching) ||
+    s.email?.toLowerCase().includes(searching.toLowerCase())
   )
 
   if (loading) {
