@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
-
-    console.log('[DEBUG] Login attempt for:', email);
-    console.log('[DEBUG] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log('[DEBUG] Service Role Key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 
     if (!email || !password) {
       return NextResponse.json(
@@ -26,21 +23,17 @@ export async function POST(request: NextRequest) {
       .eq('email', email)
       .single();
 
-    console.log('[DEBUG] User query result:', { user: !!user, error: userError?.message });
-
     if (userError || !user) {
-      console.error('[v0] User not found:', userError);
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
       );
     }
 
-    console.log('[DEBUG] User found, checking password');
-
-    // Verify password (in production, use bcrypt comparison)
-    if (password !== user.password_hash) {
-      console.error('[v0] Invalid password');
+    // Verify password with bcrypt
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
+    
+    if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
@@ -49,15 +42,13 @@ export async function POST(request: NextRequest) {
 
     // Check if user has the correct role
     if (user.role !== 'chairperson_electoral_commission') {
-      console.error('[v0] Unauthorized role:', user.role);
       return NextResponse.json(
         { error: 'You do not have permission to access this system' },
         { status: 403 }
       );
     }
 
-    // Create session
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    // Create session with no expiration (removed timeout)
     const tokenHash = Buffer.from(`${user.id}-${Date.now()}-${Math.random()}`).toString('base64');
 
     const { error: sessionError } = await supabase
@@ -67,11 +58,10 @@ export async function POST(request: NextRequest) {
         token_hash: tokenHash,
         ip_address: ipAddress,
         user_agent: request.headers.get('user-agent') || '',
-        expires_at: expiresAt.toISOString(),
+        expires_at: new Date('2099-12-31').toISOString(), // Far future date
       });
 
     if (sessionError) {
-      console.error('[v0] Session creation error:', sessionError);
       return NextResponse.json(
         { error: 'Failed to create session' },
         { status: 500 }
@@ -86,7 +76,7 @@ export async function POST(request: NextRequest) {
       details: { success: true, timestamp: new Date().toISOString() },
     });
 
-    // Set session cookie
+    // Set session cookie with long expiration
     const response = NextResponse.json(
       {
         success: true,
@@ -103,7 +93,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
-      maxAge: 15 * 60, // 15 minutes in seconds
+      maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     });
 

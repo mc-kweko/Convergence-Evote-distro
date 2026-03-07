@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import ElectionTimer from '@/components/ElectionTimer'
 import {
   BarChart3,
   Users,
   CheckCircle2,
-  Zap,
   TrendingUp,
   AlertCircle,
 } from 'lucide-react'
@@ -15,40 +15,42 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function DashboardPage() {
   const [stats, setStats] = useState({
     totalStudents: 0,
+    studentsVoted: 0,
     votesCount: 0,
     positionsCount: 0,
   })
+  const [isVotingActive, setIsVotingActive] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchStats()
-    const interval = setInterval(fetchStats, 10000) // Refresh every 10 seconds
+    const interval = setInterval(fetchStats, 5000) // Refresh every 5 seconds
     return () => clearInterval(interval)
   }, [])
 
   const fetchStats = async () => {
     try {
-      const [studentsRes, resultsRes, positionsRes] = await Promise.all([
-        fetch('/api/students'),
-        fetch('/api/results'),
-        fetch('/api/positions'),
+      const [studentsRes, positionsRes, electionRes] = await Promise.all([
+        fetch('/api/students').catch(() => null),
+        fetch('/api/positions').catch(() => null),
+        fetch('/api/election').catch(() => null),
       ])
 
-      if (!studentsRes.ok || !resultsRes.ok || !positionsRes.ok) {
-        throw new Error('Failed to fetch stats')
-      }
+      const students = studentsRes && studentsRes.ok ? await studentsRes.json() : []
+      const positions = positionsRes && positionsRes.ok ? await positionsRes.json() : []
+      const election = electionRes && electionRes.ok ? await electionRes.json() : null
 
-      const students = await studentsRes.json()
-      const results = await resultsRes.json()
-      const positions = await positionsRes.json()
-
-      const totalVotes = results.reduce((sum: number, r: any) => sum + (r.vote_count || 0), 0)
+      const studentsVoted = students.filter((s: any) => s.has_voted).length
+      const totalVotes = studentsVoted * positions.length
 
       setStats({
         totalStudents: students.length,
+        studentsVoted: studentsVoted,
         votesCount: totalVotes,
         positionsCount: positions.length,
       })
+      
+      setIsVotingActive(election?.is_active && election?.time_remaining > 0)
     } catch (error) {
       console.error('Error fetching stats:', error)
     } finally {
@@ -69,11 +71,18 @@ export default function DashboardPage() {
       description: 'Students registered',
     },
     {
-      title: 'Total Votes Cast',
-      value: stats.votesCount,
+      title: 'Students Voted',
+      value: stats.studentsVoted,
       icon: CheckCircle2,
       color: 'bg-green-500',
-      description: 'Votes recorded',
+      description: `${stats.totalStudents > 0 ? ((stats.studentsVoted / stats.totalStudents) * 100).toFixed(1) : 0}% turnout`,
+    },
+    {
+      title: 'Total Votes Cast',
+      value: stats.votesCount,
+      icon: TrendingUp,
+      color: 'bg-emerald-500',
+      description: `${stats.studentsVoted} × ${stats.positionsCount} positions`,
     },
     {
       title: 'Positions',
@@ -81,13 +90,6 @@ export default function DashboardPage() {
       icon: BarChart3,
       color: 'bg-purple-500',
       description: 'Available positions',
-    },
-    {
-      title: 'System Status',
-      value: 'Active',
-      icon: Zap,
-      color: 'bg-emerald-500',
-      description: 'All systems operational',
     },
   ]
 
@@ -122,6 +124,9 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* Election Timer Control */}
+      <ElectionTimer />
+
       {/* Overview Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -132,14 +137,16 @@ export default function DashboardPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span>Voting Period</span>
-              <span className="font-semibold">Active</span>
+              <span className={`font-semibold ${isVotingActive ? 'text-green-600' : 'text-gray-600'}`}>
+                {isVotingActive ? 'Active' : 'Inactive'}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Registered Voters</span>
-              <span className="font-semibold">{stats.totalStudents}</span>
+              <span>Students Voted</span>
+              <span className="font-semibold">{stats.studentsVoted} / {stats.totalStudents}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span>Votes Recorded</span>
+              <span>Total Votes Cast</span>
               <span className="font-semibold">{stats.votesCount}</span>
             </div>
             {stats.totalStudents > 0 && (
@@ -147,14 +154,14 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-2">
                   <span>Turnout</span>
                   <span className="font-semibold">
-                    {((stats.votesCount / stats.totalStudents) * 100).toFixed(1)}%
+                    {((stats.studentsVoted / stats.totalStudents) * 100).toFixed(1)}%
                   </span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2">
                   <div
                     className="bg-blue-500 h-2 rounded-full"
                     style={{
-                      width: `${(stats.votesCount / stats.totalStudents) * 100}%`,
+                      width: `${(stats.studentsVoted / stats.totalStudents) * 100}%`,
                     }}
                   />
                 </div>

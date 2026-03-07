@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,13 +46,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    if (currentPassword !== user.password_hash) {
+    // Verify current password with bcrypt
+    const isValidPassword = await bcrypt.compare(currentPassword, user.password_hash)
+    
+    if (!isValidPassword) {
       return NextResponse.json({ error: 'Current password is incorrect' }, { status: 401 })
     }
 
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
     const { error } = await supabase
       .from('users')
-      .update({ password_hash: newPassword })
+      .update({ password_hash: hashedPassword })
       .eq('id', user.id)
 
     if (error) throw error

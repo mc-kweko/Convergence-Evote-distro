@@ -12,9 +12,35 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
+    // Check if voting is active
+    const { data: election, error: electionError } = await supabase
+      .from('election_stats')
+      .select('is_active, ended_at')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (electionError && electionError.code !== 'PGRST116') {
+      return NextResponse.json({ error: 'System error. Please try again.' }, { status: 500 })
+    }
+
+    // Check if voting has started
+    if (!election) {
+      return NextResponse.json({ error: 'Voting has not yet begun. Please wait for the voting period to start.' }, { status: 403 })
+    }
+
+    // Check if voting is active and not expired
+    const now = Date.now()
+    const endTime = election.ended_at ? new Date(election.ended_at).getTime() : 0
+    const hasExpired = endTime > 0 && now >= endTime
+
+    if (!election.is_active || hasExpired) {
+      return NextResponse.json({ error: 'The voting period has ended. Thank you for your interest.' }, { status: 403 })
+    }
+
     const { data: student, error } = await supabase
       .from('students')
-      .select('*')
+      .select('id, has_voted')
       .eq('id', student_id)
       .eq('pin', pin)
       .single()

@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { Plus, Trash2, Upload, Eye, Edit, X } from 'lucide-react'
+import { Plus, Trash2, Upload, Eye, Edit, X, Power } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 
 interface Position {
   id: string
   name: string
   description: string
+  is_active: boolean
 }
 
 interface Candidate {
@@ -87,6 +89,21 @@ export default function BallotSetupPage() {
     } catch (error) {
       console.error('Error deleting position:', error)
       alert('Failed to delete position')
+    }
+  }
+
+  const handleTogglePosition = async (positionId: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/positions/${positionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: !currentStatus })
+      })
+      if (!res.ok) throw new Error('Failed to toggle position')
+      fetchPositions()
+    } catch (error) {
+      console.error('Error toggling position:', error)
+      alert('Failed to toggle position')
     }
   }
 
@@ -384,19 +401,39 @@ export default function BallotSetupPage() {
         <Card>
           <CardHeader>
             <CardTitle>Existing Positions</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Toggle positions to control which ones appear on the ballot
+            </p>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {positions.map((position) => (
                 <div
                   key={position.id}
-                  className="flex justify-between items-center p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                  className="flex justify-between items-center p-3 border rounded-lg hover:bg-accent transition-colors"
                 >
-                  <div onClick={() => handleViewPosition(position)} className="flex-1">
-                    <p className="font-medium">{position.name}</p>
-                    {position.description && (
-                      <p className="text-sm text-muted-foreground">{position.description}</p>
-                    )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={position.is_active}
+                          onCheckedChange={() => handleTogglePosition(position.id, position.is_active)}
+                        />
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${
+                          position.is_active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {position.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                      <div onClick={() => handleViewPosition(position)} className="cursor-pointer">
+                        <p className="font-medium">{position.name}</p>
+                        {position.description && (
+                          <p className="text-sm text-muted-foreground">{position.description}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,18 +26,56 @@ export default function VotePage() {
   const [votes, setVotes] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [localTime, setLocalTime] = useState<number>(0)
+  const [votingEnded, setVotingEnded] = useState(false)
+  const [isActive, setIsActive] = useState(false)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     checkAuth()
     fetchBallot()
+    fetchElectionStatus()
+    const interval = setInterval(fetchElectionStatus, 3000)
+    return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (isActive && localTime > 0) {
+      if (timerRef.current) clearInterval(timerRef.current)
+      timerRef.current = setInterval(() => {
+        setLocalTime(prev => {
+          const newTime = Math.max(0, prev - 1)
+          if (newTime === 0) {
+            setVotingEnded(true)
+            // Auto-stop voting when time expires
+            fetch('/api/election', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'stop' })
+            }).catch(console.error)
+            
+            // Log out voter and redirect
+            alert('Voting period has ended. You will be logged out.')
+            fetch('/api/voting/logout', { method: 'POST' })
+              .then(() => router.push('/voting'))
+              .catch(() => router.push('/voting'))
+          }
+          return newTime
+        })
+      }, 1000)
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+    
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [isActive, localTime])
 
   const checkAuth = async () => {
     try {
       const res = await fetch('/api/voting/me')
-      if (!res.ok) {
-        router.push('/voting')
-      }
+      if (!res.ok) router.push('/voting')
     } catch (error) {
       router.push('/voting')
     }
@@ -46,7 +84,16 @@ export default function VotePage() {
   const fetchBallot = async () => {
     try {
       const res = await fetch('/api/voting/ballot')
-      if (!res.ok) throw new Error('Failed to fetch ballot')
+      if (!res.ok) {
+        const error = await res.json()
+        if (res.status === 403) {
+          setVotingEnded(true)
+          alert(error.error || 'Voting is not active')
+          router.push('/voting')
+          return
+        }
+        throw new Error('Failed to fetch ballot')
+      }
       const data = await res.json()
       setPositions(data)
     } catch (error) {
@@ -56,11 +103,35 @@ export default function VotePage() {
     }
   }
 
+  const fetchElectionStatus = async () => {
+    try {
+      const res = await fetch('/api/election', { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        setLocalTime(data.time_remaining)
+        setIsActive(data.is_active)
+        
+        if (data.time_remaining <= 0 && !data.is_active) {
+          setVotingEnded(true)
+        } else {
+          setVotingEnded(false)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching election status:', error)
+    }
+  }
+
   const handleVote = (positionId: string, candidateId: string) => {
     setVotes({ ...votes, [positionId]: candidateId })
   }
 
   const handleSubmit = async () => {
+    if (votingEnded) {
+      alert('Voting period has ended')
+      return
+    }
+
     if (Object.keys(votes).length === 0) {
       alert('Please select at least one candidate')
       return
@@ -90,6 +161,13 @@ export default function VotePage() {
     }
   }
 
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    return `${hours}h ${minutes}m ${secs}s`
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading ballot...</div>
   }
@@ -104,6 +182,19 @@ export default function VotePage() {
           <h1 className="text-3xl font-bold">Official Ballot</h1>
           <p className="text-muted-foreground">Jinja College Electoral Commission</p>
           <p className="text-sm text-muted-foreground">Select one candidate for each position</p>
+          
+          {localTime > 0 && isActive && (
+            <div className="mt-4 inline-block bg-green-50 border border-green-200 px-6 py-3 rounded-lg">
+              <p className="text-sm text-green-700 font-medium mb-1">Time Remaining</p>
+              <p className="text-3xl font-bold text-green-900">{formatTime(localTime)}</p>
+            </div>
+          )}
+          
+          {votingEnded && (
+            <div className="mt-4 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
+              <p className="text-red-800 font-medium">Voting period has ended</p>
+            </div>
+          )}
         </div>
 
         {positions.map((position) => (
@@ -169,9 +260,9 @@ export default function VotePage() {
               onClick={handleSubmit}
               size="lg"
               className="w-full"
-              disabled={submitting || Object.keys(votes).length === 0}
+              disabled={submitting || Object.keys(votes).length === 0 || votingEnded}
             >
-              {submitting ? 'Submitting...' : 'Confirm and Submit'}
+              {submitting ? 'Submitting...' : votingEnded ? 'Voting Ended' : 'Confirm and Submit'}
             </Button>
           </CardContent>
         </Card>

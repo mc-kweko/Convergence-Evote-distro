@@ -31,11 +31,16 @@ export async function PATCH(
     const supabase = await createClient()
     const { id } = await params
     const body = await request.json()
-    const { name, description } = body
+    const { name, description, is_active } = body
+
+    const updateData: any = {}
+    if (name !== undefined) updateData.name = name
+    if (description !== undefined) updateData.description = description
+    if (is_active !== undefined) updateData.is_active = is_active
 
     const { data, error } = await supabase
       .from('positions')
-      .update({ name, description })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()

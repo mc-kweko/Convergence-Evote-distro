@@ -13,9 +13,36 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient()
 
+    // Check if election is active with time validation
+    const { data: electionStatus } = await supabase
+      .from('election_stats')
+      .select('id, is_active, ended_at')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (!electionStatus) {
+      return NextResponse.json({ error: 'Voting is not currently active' }, { status: 403 })
+    }
+
+    // Validate time hasn't expired
+    const now = Date.now()
+    const endTime = new Date(electionStatus.ended_at).getTime()
+
+    if (now >= endTime) {
+      // Auto-deactivate expired election
+      await supabase
+        .from('election_stats')
+        .update({ is_active: false })
+        .eq('id', electionStatus.id)
+      
+      return NextResponse.json({ error: 'Voting period has ended' }, { status: 403 })
+    }
+
     const { data: positions, error: posError } = await supabase
       .from('positions')
-      .select('*')
+      .select('id, name, description, created_at')
       .eq('is_active', true)
       .order('created_at', { ascending: true })
 
@@ -25,7 +52,7 @@ export async function GET(request: NextRequest) {
       positions.map(async (position) => {
         const { data: candidates } = await supabase
           .from('candidates')
-          .select('*')
+          .select('id, name, student_id, manifesto, photo_url')
           .eq('position_id', position.id)
           .eq('is_active', true)
 
