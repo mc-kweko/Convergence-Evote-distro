@@ -193,7 +193,7 @@ export default function StudentsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <img src="/Jinja College badge.png" alt="Jinja College" className="w-16 h-16 object-contain" />
+          <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-16 h-16 object-contain" />
           <div>
             <h1 className="text-3xl font-bold">Student Management</h1>
             <p className="text-muted-foreground">
@@ -347,3 +347,5 @@ export default function StudentsPage() {
     </div>
   )
 }
+
+

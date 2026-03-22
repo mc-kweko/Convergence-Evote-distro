@@ -107,7 +107,7 @@ Then restart voting.
 ## 📱 ADMIN CREDENTIALS
 
 **Email**: mckweko@gmail.com  
-**Email**: admin@jinjacollege.edu  
+**Email**: admin@school.edu  
 **Password**: (Your secure password)
 
 ---
@@ -171,3 +171,4 @@ DELETE FROM votes;
 ---
 
 **Good luck with the election! 🎉**
+

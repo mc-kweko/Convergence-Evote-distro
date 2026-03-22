@@ -89,8 +89,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       >
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/Jinja College badge.png" alt="Jinja College" className="w-10 h-10 object-contain" />
-            {sidebarOpen && <h2 className="text-xl font-bold">EC Admin</h2>}
+            <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-10 h-10 object-contain" />
+            {sidebarOpen && <h2 className="text-xl font-bold">E-Vote Admin</h2>}
           </div>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -134,8 +134,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="flex-1 overflow-auto flex flex-col">
         <div className="bg-background border-b border-border p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/Jinja College badge.png" alt="Jinja College" className="w-8 h-8 object-contain" />
-            <h1 className="text-sm text-muted-foreground">Electoral Commission Admin Dashboard - Jinja College</h1>
+            <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-8 h-8 object-contain" />
+            <h1 className="text-sm text-muted-foreground">Convergence E-Vote School Admin Console</h1>
           </div>
           {mounted && (
             <Button
@@ -152,3 +152,5 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     </div>
   )
 }
+
+

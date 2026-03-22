@@ -19,6 +19,7 @@ export async function DELETE(
       .from('positions')
       .delete()
       .eq('id', id)
+      .eq('school_id', adminSession.schoolId)
 
     if (error) throw error
 
@@ -53,6 +54,7 @@ export async function PATCH(
       .from('positions')
       .update(updateData)
       .eq('id', id)
+      .eq('school_id', adminSession.schoolId)
       .select()
       .single()
 

@@ -1,5 +1,5 @@
 -- ============================================
--- JINJA COLLEGE VOTING SYSTEM - FINAL SETUP
+-- CONVERGENCE E-VOTE - FINAL SETUP
 -- Run this ONCE before the election
 -- ============================================
 
@@ -19,14 +19,20 @@ CREATE INDEX IF NOT EXISTS idx_students_pin ON students(pin);
 CREATE INDEX IF NOT EXISTS idx_students_has_voted ON students(has_voted);
 
 -- 3. CREATE ATOMIC VOTE INCREMENT FUNCTION (Critical for vote counting)
-CREATE OR REPLACE FUNCTION increment_vote_count(candidate_id UUID)
+CREATE OR REPLACE FUNCTION increment_vote_count(candidate_id UUID, school_id_input UUID DEFAULT NULL)
 RETURNS void
 LANGUAGE plpgsql
 AS $$
 BEGIN
-  UPDATE candidates
-  SET vote_count = COALESCE(vote_count, 0) + 1
-  WHERE id = candidate_id;
+  IF school_id_input IS NULL THEN
+    UPDATE candidates
+    SET vote_count = COALESCE(vote_count, 0) + 1
+    WHERE id = candidate_id;
+  ELSE
+    UPDATE candidates
+    SET vote_count = COALESCE(vote_count, 0) + 1
+    WHERE id = candidate_id AND school_id = school_id_input;
+  END IF;
 END;
 $$;
 
@@ -74,3 +80,4 @@ WHERE proname = 'increment_vote_count';
 -- SETUP COMPLETE!
 -- If all checks show ✓ PASS, you're ready!
 -- ============================================
+

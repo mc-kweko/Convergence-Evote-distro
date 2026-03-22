@@ -8,10 +8,16 @@ export async function GET(request: NextRequest) {
     const adminSession = await validateAdminSession()
     const { searchParams } = new URL(request.url)
     const positionId = searchParams.get('position_id')
+    const schoolId = searchParams.get('school_id')
+
+    if (!adminSession && !schoolId) {
+      return NextResponse.json({ error: 'school_id query param required' }, { status: 400 })
+    }
 
     let query = supabase
       .from('candidates')
       .select('id, position_id, name, student_id, manifesto, photo_url, created_at')
+      .eq('school_id', adminSession?.schoolId || schoolId)
 
     if (positionId) {
       query = query.eq('position_id', positionId)
@@ -55,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     const { data: candidate, error } = await supabase
       .from('candidates')
-      .insert([{ position_id, name, student_id, manifesto, photo_url }])
+      .insert([{ position_id, name, student_id, manifesto, photo_url, school_id: adminSession.schoolId }])
       .select()
       .single()
 

@@ -135,7 +135,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <img src="/Jinja College badge.png" alt="Jinja College" className="w-16 h-16 object-contain" />
+        <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-16 h-16 object-contain" />
         <div>
           <h1 className="text-3xl font-bold">System Settings</h1>
           <p className="text-muted-foreground">Manage election system and data</p>
@@ -294,10 +294,12 @@ export default function SettingsPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Institution</span>
-            <span className="font-medium">Jinja College</span>
+            <span className="font-medium">Convergence E-Vote</span>
           </div>
         </CardContent>
       </Card>
     </div>
   )
 }
+
+

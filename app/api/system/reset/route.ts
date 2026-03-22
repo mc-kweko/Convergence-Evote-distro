@@ -11,12 +11,12 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
-    await supabase.from('votes').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    await supabase.from('candidates').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    await supabase.from('positions').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    await supabase.from('students').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    await supabase.from('ballots').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    await supabase.from('audit_logs').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('votes').delete().eq('school_id', adminSession.schoolId)
+    await supabase.from('candidates').delete().eq('school_id', adminSession.schoolId)
+    await supabase.from('positions').delete().eq('school_id', adminSession.schoolId)
+    await supabase.from('students').delete().eq('school_id', adminSession.schoolId)
+    await supabase.from('ballots').delete().eq('school_id', adminSession.schoolId)
+    await supabase.from('audit_logs').delete().eq('school_id', adminSession.schoolId)
 
     return NextResponse.json({ success: true, message: 'System reset successfully' })
   } catch (error) {

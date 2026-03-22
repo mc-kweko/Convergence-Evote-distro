@@ -13,11 +13,15 @@ export async function POST(request: NextRequest) {
       // Find and delete the session
       const { data: session } = await supabase
         .from('sessions')
-        .select('id, user_id')
+        .select('id, user_id, users(school_id)')
         .eq('token_hash', sessionToken)
         .single();
 
       if (session) {
+        const schoolId = Array.isArray((session as any).users)
+          ? (session as any).users[0]?.school_id
+          : (session as any).users?.school_id;
+
         await supabase
           .from('sessions')
           .delete()
@@ -26,6 +30,7 @@ export async function POST(request: NextRequest) {
         // Log logout action
         await supabase.from('audit_logs').insert({
           user_id: session.user_id,
+          school_id: schoolId,
           action: 'LOGOUT',
           details: { success: true, timestamp: new Date().toISOString() },
         });

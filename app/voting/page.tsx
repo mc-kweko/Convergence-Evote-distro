@@ -16,40 +16,65 @@ interface Student {
   has_voted: boolean
 }
 
+interface School {
+  id: string
+  name: string
+  slug: string
+  portal_live: boolean
+}
+
 export default function VotingLoginPage() {
   const router = useRouter()
+  const [schools, setSchools] = useState<School[]>([])
+  const [schoolsLoading, setSchoolsLoading] = useState(true)
   const [students, setStudents] = useState<Student[]>([])
   const [search, setSearch] = useState('')
+  const [schoolSlug, setSchoolSlug] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const selectedSchool = schools.find((school) => school.slug === schoolSlug)
+  const canSearchStudents = Boolean(schoolSlug && selectedSchool?.portal_live)
 
   useEffect(() => {
-    // Removed initial fetch for performance
+    fetchSchools()
   }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (search.length >= 2) {
+      if (search.length >= 2 && canSearchStudents) {
         searchStudents(search)
       } else {
         setStudents([])
       }
     }, 300)
     return () => clearTimeout(timer)
-  }, [search])
+  }, [search, canSearchStudents])
 
-  const fetchStudents = async () => {
-    // Don't fetch all students upfront for performance
-    // Students will be searched on-demand
+  const fetchSchools = async () => {
+    try {
+      const schoolFromUrl = new URLSearchParams(window.location.search).get('school')
+      const res = await fetch('/api/schools/public', { cache: 'no-store' })
+      if (!res.ok) throw new Error('Failed to fetch schools')
+      const data: School[] = await res.json()
+      setSchools(data)
+
+      if (schoolFromUrl) {
+        setSchoolSlug(schoolFromUrl.toLowerCase().trim())
+      }
+    } catch (fetchError) {
+      console.error('Error fetching schools:', fetchError)
+    } finally {
+      setSchoolsLoading(false)
+    }
   }
 
   const searchStudents = async (query: string) => {
-    if (query.length < 2) return
+    if (query.length < 2 || !schoolSlug) return
     
     try {
-      const res = await fetch(`/api/students?search=${encodeURIComponent(query)}&limit=20`)
+      const res = await fetch(`/api/students?school=${encodeURIComponent(schoolSlug)}&search=${encodeURIComponent(query)}&limit=20`)
       if (!res.ok) throw new Error('Failed to fetch students')
       const data = await res.json()
       setStudents(data)
@@ -65,7 +90,7 @@ export default function VotingLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedStudent || !pin) return
+    if (!selectedStudent || !pin || !schoolSlug) return
 
     setLoading(true)
     setError('')
@@ -77,6 +102,7 @@ export default function VotingLoginPage() {
         body: JSON.stringify({
           student_id: selectedStudent.id,
           pin: pin,
+          school_slug: schoolSlug,
         }),
       })
 
@@ -101,15 +127,47 @@ export default function VotingLoginPage() {
         <Card className="w-full">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <img src="/Jinja College badge.png" alt="Jinja College" className="w-20 h-20 object-contain" />
+              <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-20 h-20 object-contain" />
             </div>
-            <CardTitle className="text-3xl">Student Voting Portal</CardTitle>
-            <p className="text-muted-foreground">Jinja College Electoral Commission</p>
+            <CardTitle className="text-3xl">Convergence E-Vote Portal</CardTitle>
+            <p className="text-muted-foreground">Secure School Elections</p>
           </CardHeader>
 
         <CardContent className="space-y-6">
           {!selectedStudent ? (
             <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Select Your School</label>
+                <select
+                  value={schoolSlug}
+                  onChange={(e) => {
+                    setSchoolSlug(e.target.value)
+                    setSearch('')
+                    setStudents([])
+                    setSelectedStudent(null)
+                    setPin('')
+                    setError('')
+                  }}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  disabled={schoolsLoading}
+                >
+                  <option value="">{schoolsLoading ? 'Loading schools...' : 'Choose a school'}</option>
+                  {schools.map((school) => (
+                    <option key={school.id} value={school.slug}>
+                      {school.name}{school.portal_live ? '' : ' (Portal not live yet)'}
+                    </option>
+                  ))}
+                </select>
+                {!schoolsLoading && schools.length === 0 && (
+                  <p className="text-xs text-muted-foreground mt-2">No registered schools found yet.</p>
+                )}
+                {selectedSchool && !selectedSchool.portal_live && (
+                  <p className="text-xs text-amber-700 mt-2">
+                    This school portal is not live yet. Ask your election admin to deploy the portal.
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label className="text-sm font-medium mb-2 block">Search Your Name</label>
                 <div className="relative">
@@ -119,8 +177,12 @@ export default function VotingLoginPage() {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-10"
+                    disabled={!canSearchStudents}
                   />
                 </div>
+                {!schoolSlug && (
+                  <p className="text-xs text-muted-foreground mt-2">Select your school to enable name search.</p>
+                )}
               </div>
 
               {search && (
@@ -205,10 +267,11 @@ export default function VotingLoginPage() {
 
       {/* Footer Branding */}
       <div className="text-center text-sm text-slate-400 mt-6 space-y-1">
-        <p>Built by Jinja College ICT Club</p>
-        <p>© {new Date().getFullYear()} Jinja College. All rights reserved.</p>
+        <p>Built by Convergence Software</p>
+        <p>© {new Date().getFullYear()} Convergence E-Vote. All rights reserved.</p>
       </div>
       </div>
     </div>
   )
 }
+

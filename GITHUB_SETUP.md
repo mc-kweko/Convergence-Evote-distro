@@ -45,8 +45,8 @@ Replace with your actual name and email.
 1. Go to https://github.com
 2. Click the "+" icon (top right) → "New repository"
 3. Fill in:
-   - **Repository name:** `jinja-college-electoral-system`
-   - **Description:** "Electoral Commission voting system for Jinja College"
+   - **Repository name:** `convergence-e-vote`
+   - **Description:** "Electoral Commission voting system for Convergence E-Vote"
    - **Visibility:** Choose "Private" (recommended) or "Public"
    - **DO NOT** check "Initialize with README"
 4. Click "Create repository"
@@ -71,10 +71,10 @@ git init
 git add .
 
 # Create first commit
-git commit -m "Initial commit - Jinja College Electoral System"
+git commit -m "Initial commit - Convergence E-Vote Electoral System"
 
 # Add your GitHub repository as remote
-git remote add origin https://github.com/YOUR_USERNAME/jinja-college-electoral-system.git
+git remote add origin https://github.com/YOUR_USERNAME/convergence-e-vote.git
 
 # Push to GitHub
 git branch -M main
@@ -182,3 +182,5 @@ git pull
 5. Deploy!
 
 See **DEPLOYMENT_GUIDE.md** for detailed deployment instructions.
+
+

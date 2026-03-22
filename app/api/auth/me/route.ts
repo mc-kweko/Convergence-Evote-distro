@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     // Verify the session in the database
     const { data: session, error } = await supabase
       .from('sessions')
-      .select('*, users(id, email, role)')
+      .select('*, users(id, email, role, school_id)')
       .eq('token_hash', sessionToken)
       .gt('expires_at', new Date().toISOString())
       .single();

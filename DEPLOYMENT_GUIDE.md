@@ -1,4 +1,4 @@
-# Jinja College Electoral Commission - Deployment Guide
+# Convergence E-Vote - Deployment Guide
 
 ## Quick Deployment to Vercel (5 Minutes)
 
@@ -13,7 +13,7 @@
 ```bash
 git init
 git add .
-git commit -m "Initial commit - Jinja College Electoral System"
+git commit -m "Initial commit - Convergence E-Vote Electoral System"
 git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
 git push -u origin main
 ```
@@ -95,7 +95,7 @@ pm2 startup
 
 ### 1. Test Admin Login
 - [ ] Go to your deployed URL
-- [ ] Login with: `admin@jinjacollege.edu` / `admin123`
+- [ ] Login with: `admin@school.edu` / `admin123`
 - [ ] Verify dashboard loads
 
 ### 2. Import Students
@@ -180,7 +180,7 @@ https://your-app.vercel.app/dashboard/results
 - Ensure student hasn't already voted
 
 ### Admin Can't Login
-- Verify credentials: `admin@jinjacollege.edu` / `admin123`
+- Verify credentials: `admin@school.edu` / `admin123`
 - Check Supabase connection
 - Verify environment variables in Vercel
 
@@ -253,12 +253,12 @@ For technical issues:
 
 ---
 
-## Recommended Setup for Jinja College
+## Recommended Setup for Convergence E-Vote
 
 **Best Approach:**
 1. Deploy to Vercel (free, reliable)
 2. Use Supabase for database (free, backed up)
-3. Custom domain (optional): `vote.jinjacollege.edu`
+3. Custom domain (optional): `portal.school-domain.edu`
 4. Total cost: **FREE**
 
 **Benefits:**
@@ -280,3 +280,5 @@ For technical issues:
 6. Prepare student communication about voting process
 
 **Good luck with your election! 🗳️**
+
+

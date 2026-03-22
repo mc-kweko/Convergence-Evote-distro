@@ -12,7 +12,7 @@ envContent.split(/\r?\n/).forEach(line => {
 
 async function createAdmin() {
   try {
-    const email = 'admin@jinjacollege.edu';
+    const email = 'admin@school.edu';
     const password = 'admin123';
     const role = 'chairperson_electoral_commission';
 
@@ -43,3 +43,4 @@ async function createAdmin() {
 }
 
 createAdmin();
+

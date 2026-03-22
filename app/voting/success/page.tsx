@@ -13,10 +13,10 @@ export default function VotingSuccessPage() {
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <div className="flex justify-center mb-4">
-            <img src="/Jinja College badge.png" alt="Jinja College" className="w-20 h-20 object-contain" />
+            <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-20 h-20 object-contain" />
           </div>
           <CardTitle className="text-3xl">Vote Submitted!</CardTitle>
-          <p className="text-muted-foreground mt-2">Jinja College Electoral Commission</p>
+          <p className="text-muted-foreground mt-2">Convergence E-Vote</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
@@ -35,9 +35,11 @@ export default function VotingSuccessPage() {
 
       {/* Footer Branding */}
       <div className="absolute bottom-8 left-0 right-0 text-center text-sm text-green-200 space-y-1">
-        <p>Built by Jinja College ICT Club</p>
-        <p>© {new Date().getFullYear()} Jinja College. All rights reserved.</p>
+        <p>Built by Convergence Software</p>
+        <p>© {new Date().getFullYear()} Convergence E-Vote. All rights reserved.</p>
       </div>
     </div>
   )
 }
+
+

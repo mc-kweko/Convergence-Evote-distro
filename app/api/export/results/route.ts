@@ -16,16 +16,19 @@ export async function GET(request: NextRequest) {
     const { count: totalEligibleVoters } = await supabase
       .from('students')
       .select('*', { count: 'exact', head: true })
+      .eq('school_id', adminSession.schoolId)
 
     // Get total votes cast
     const { count: totalVotesCast } = await supabase
       .from('students')
       .select('*', { count: 'exact', head: true })
+      .eq('school_id', adminSession.schoolId)
       .eq('has_voted', true)
 
     const { data: positions, error: posError } = await supabase
       .from('positions')
       .select('*')
+      .eq('school_id', adminSession.schoolId)
       .order('created_at', { ascending: true })
 
     if (posError) throw posError
@@ -36,6 +39,7 @@ export async function GET(request: NextRequest) {
         .from('candidates')
         .select('*')
         .eq('position_id', position.id)
+        .eq('school_id', adminSession.schoolId)
         .order('vote_count', { ascending: false })
 
       if (candError) throw candError
@@ -53,7 +57,7 @@ export async function GET(request: NextRequest) {
     }
 
     const pdfBuffer = await generateResultsPdf({
-      electionName: 'Jinja College Electoral Commission',
+      electionName: 'Convergence E-Vote',
       generatedAt: new Date(),
       pollDate: new Date(),
       totalEligibleVoters: totalEligibleVoters || 0,

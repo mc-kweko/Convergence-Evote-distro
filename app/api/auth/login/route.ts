@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     // Get user by email
     const { data: user, error: userError } = await supabase
       .from('users')
-      .select('*')
+      .select('id, email, role, school_id, password_hash')
       .eq('email', email)
       .single();
 
@@ -42,9 +42,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user has the correct role
-    if (user.role !== 'chairperson_electoral_commission') {
+    if (user.role !== 'chairperson_electoral_commission' && user.role !== 'school_admin') {
       return NextResponse.json(
         { error: 'You do not have permission to access this system' },
+        { status: 403 }
+      );
+    }
+
+    if (!user.school_id) {
+      return NextResponse.json(
+        { error: 'This account is not mapped to a school workspace' },
         { status: 403 }
       );
     }
@@ -73,6 +80,7 @@ export async function POST(request: NextRequest) {
     // Log login action
     await supabase.from('audit_logs').insert({
       user_id: user.id,
+      school_id: user.school_id,
       action: 'LOGIN',
       ip_address: ipAddress,
       details: { success: true, timestamp: new Date().toISOString() },
@@ -86,6 +94,7 @@ export async function POST(request: NextRequest) {
           id: user.id,
           email: user.email,
           role: user.role,
+          school_id: user.school_id,
         },
       },
       { status: 200 }

@@ -96,10 +96,10 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4 mb-6">
-        <img src="/Jinja College badge.png" alt="Jinja College" className="w-16 h-16 object-contain" />
+        <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-16 h-16 object-contain" />
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Jinja College Electoral Commission Admin Portal</p>
+          <p className="text-muted-foreground">Convergence E-Vote Admin Portal</p>
         </div>
       </div>
 
@@ -209,3 +209,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+

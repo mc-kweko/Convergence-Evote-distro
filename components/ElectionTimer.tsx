@@ -19,6 +19,7 @@ export default function ElectionTimer() {
   const [localTime, setLocalTime] = useState<number>(0)
   const [duration, setDuration] = useState(60)
   const [extendDuration, setExtendDuration] = useState(30)
+  const [portalUrl, setPortalUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const lastFetchRef = useRef<number>(0)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -81,27 +82,30 @@ export default function ElectionTimer() {
   }
 
   const handleStart = async () => {
-    if (!confirm(`Start voting for ${duration} minutes?`)) return
+    if (!confirm(`Deploy portal and start voting for ${duration} minutes?`)) return
     
     setLoading(true)
     try {
       const res = await fetch('/api/election', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start', duration_minutes: duration })
+        body: JSON.stringify({ action: 'deploy_and_start', duration_minutes: duration })
       })
 
       const result = await res.json()
 
       if (!res.ok) {
-        alert(`Failed to start voting: ${result.error || 'Unknown error'}`)
+        alert(`Failed to deploy and start voting: ${result.error || 'Unknown error'}`)
         return
       }
       
-      alert('Voting started successfully!')
+      if (result.portal_url) {
+        setPortalUrl(result.portal_url)
+      }
+      alert('Portal deployed and voting started successfully!')
       await fetchStatus()
     } catch (error) {
-      alert('Failed to start voting')
+      alert('Failed to deploy portal and start voting')
     } finally {
       setLoading(false)
     }
@@ -230,9 +234,18 @@ export default function ElectionTimer() {
               className="w-full"
             >
               <Play className="w-4 h-4 mr-2" />
-              Start Voting
+              Deploy Portal and Start Election
             </Button>
           </>
+        )}
+
+        {portalUrl && (
+          <div className="border rounded-lg p-4 bg-muted/30">
+            <p className="text-sm font-medium mb-2">Election Portal Live</p>
+            <p className="mt-1 text-xs break-all">
+              URL: <a href={portalUrl} className="underline" target="_blank" rel="noreferrer">{portalUrl}</a>
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

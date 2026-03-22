@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
         .from('candidates')
         .update({ photo_url: publicUrl })
         .eq('id', candidateId)
+        .eq('school_id', adminSession.schoolId)
     }
 
     return NextResponse.json({ url: publicUrl, success: true })

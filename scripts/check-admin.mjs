@@ -12,7 +12,7 @@ envContent.split(/\r?\n/).forEach(line => {
 
 async function checkAdmin() {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/users?email=eq.admin@jinjacollege.edu`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/users?email=eq.admin@school.edu`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -38,3 +38,4 @@ async function checkAdmin() {
 }
 
 checkAdmin();
+

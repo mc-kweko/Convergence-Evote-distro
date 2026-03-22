@@ -171,10 +171,10 @@ export default function VotePage() {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <img src="/Jinja College badge.png" alt="Jinja College" className="w-20 h-20 object-contain" />
+            <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-20 h-20 object-contain" />
           </div>
           <h1 className="text-3xl font-bold">Official Ballot</h1>
-          <p className="text-muted-foreground">Jinja College Electoral Commission</p>
+          <p className="text-muted-foreground">Convergence E-Vote</p>
           <p className="text-sm text-muted-foreground">Select one candidate for each position</p>
           
           {localTime > 0 && isActive && (
@@ -263,10 +263,12 @@ export default function VotePage() {
 
         {/* Footer Branding */}
         <div className="text-center text-sm text-muted-foreground pb-8 space-y-1">
-          <p>Built by Jinja College ICT Club</p>
-          <p>© {new Date().getFullYear()} Jinja College. All rights reserved.</p>
+          <p>Built by Convergence Software</p>
+          <p>© {new Date().getFullYear()} Convergence E-Vote. All rights reserved.</p>
         </div>
       </div>
     </div>
   )
 }
+
+

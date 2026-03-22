@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
 
     await supabase.from('audit_logs').insert({
       user_id: user.id,
+      school_id: adminSession.schoolId,
       action: 'PASSWORD_CHANGE',
       ip_address: request.headers.get('x-forwarded-for') || 'unknown',
       details: { timestamp: new Date().toISOString() },

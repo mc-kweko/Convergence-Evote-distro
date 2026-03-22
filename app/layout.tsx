@@ -7,11 +7,11 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Jinja College Electoral Commission - Admin Dashboard',
-  description: 'Electoral Commission Admin Dashboard for managing student elections',
+  title: 'Convergence E-Vote - Admin Dashboard',
+  description: 'Multi-school election platform for secure student voting',
   icons: {
-    icon: '/Jinja College badge.png',
-    apple: '/Jinja College badge.png',
+    icon: '/Convergence%20Logo-distro.png',
+    apple: '/Convergence%20Logo-distro.png',
   },
 }
 
@@ -30,3 +30,5 @@ export default function RootLayout({
     </html>
   )
 }
+
+

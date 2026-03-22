@@ -6,6 +6,11 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
     const positionId = searchParams.get('position_id')
+    const schoolId = searchParams.get('school_id')
+
+    if (!schoolId) {
+      return NextResponse.json({ error: 'school_id query param required' }, { status: 400 })
+    }
 
     let query = supabase
       .from('candidates')
@@ -18,6 +23,7 @@ export async function GET(request: NextRequest) {
           name
         )
       `)
+      .eq('school_id', schoolId)
       .order('vote_count', { ascending: false })
 
     if (positionId) {

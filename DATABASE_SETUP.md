@@ -1,4 +1,4 @@
-# Jinja College Electoral Commission - Database Setup Guide
+# Convergence E-Vote - Database Setup Guide
 
 This guide walks you through setting up the Supabase PostgreSQL database for the Electoral Commission Admin Dashboard.
 
@@ -134,3 +134,4 @@ If you encounter issues:
 2. Verify all environment variables are set
 3. Ensure your Supabase project is active
 4. Check PostgreSQL logs in Supabase dashboard
+

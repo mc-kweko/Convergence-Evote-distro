@@ -35,7 +35,7 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
 
   let cardIndex = 0
   const cardsPerPage = 4
-  const votingPortalUrl = 'https://jicovote.vercel.app'
+  const votingPortalUrl = 'https://portal.convergence-evote.app'
 
   for (let i = 0; i < cards.length; i++) {
     if (cardIndex > 0 && cardIndex % cardsPerPage === 0) {
@@ -54,7 +54,7 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
     try {
       const fs = require('fs')
       const path = require('path')
-      const badgePath = path.join(process.cwd(), 'public', 'Jinja College badge.png')
+      const badgePath = path.join(process.cwd(), 'public', 'Convergence E-Vote badge.png')
       const badgeBase64 = fs.readFileSync(badgePath, 'base64')
       doc.addImage(`data:image/png;base64,${badgeBase64}`, 'PNG', 15, yPosition + 5, 20, 20)
     } catch (e) {
@@ -65,7 +65,7 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
     // Add header
     doc.setFontSize(14)
     doc.setFont('helvetica', 'bold')
-    doc.text('JINJA COLLEGE VOTING CARD', 105, yPosition + 15, { align: 'center' })
+    doc.text('CONVERGENCE E-VOTE CARD', 105, yPosition + 15, { align: 'center' })
 
     // Add student info
     doc.setFontSize(10)
@@ -89,7 +89,7 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
     doc.text('Keep this PIN confidential', 15, yPosition + 58)
     
     // Add copyright at bottom center
-    doc.text(`\u00a9 ${new Date().getFullYear()} Jinja College`, 105, yPosition + 58, { align: 'center' })
+    doc.text(`\u00a9 ${new Date().getFullYear()} Convergence E-Vote`, 105, yPosition + 58, { align: 'center' })
 
     cardIndex++
   }
@@ -99,7 +99,7 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
   const pageWidth = doc.internal.pageSize.getWidth()
   doc.setFontSize(7)
   doc.setTextColor(100, 100, 100)
-  doc.text(`Built by Jinja College ICT Club | \u00a9 ${new Date().getFullYear()} Jinja College`, pageWidth / 2, pageHeight - 5, { align: 'center' })
+  doc.text(`Built by Convergence Software | \u00a9 ${new Date().getFullYear()} Convergence E-Vote`, pageWidth / 2, pageHeight - 5, { align: 'center' })
 
   return Buffer.from(doc.output('arraybuffer'))
 }
@@ -118,7 +118,7 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   try {
     const fs = require('fs')
     const path = require('path')
-    const badgePath = path.join(process.cwd(), 'public', 'Jinja College badge.png')
+    const badgePath = path.join(process.cwd(), 'public', 'Convergence E-Vote badge.png')
     const badgeBase64 = fs.readFileSync(badgePath, 'base64')
     doc.addImage(`data:image/png;base64,${badgeBase64}`, 'PNG', 15, 10, 25, 25)
   } catch (e) {
@@ -269,9 +269,11 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   const footerY = doc.internal.pageSize.getHeight() - 15
   doc.setFontSize(8)
   doc.setTextColor(100, 100, 100)
-  doc.text('Built by Jinja College ICT Club', pageWidth / 2, footerY, { align: 'center' })
-  doc.text(`\u00a9 ${new Date().getFullYear()} Jinja College. All rights reserved.`, pageWidth / 2, footerY + 4, { align: 'center' })
+  doc.text('Built by Convergence Software', pageWidth / 2, footerY, { align: 'center' })
+  doc.text(`\u00a9 ${new Date().getFullYear()} Convergence E-Vote. All rights reserved.`, pageWidth / 2, footerY + 4, { align: 'center' })
 
   return Buffer.from(doc.output('arraybuffer'))
 }
+
+
 

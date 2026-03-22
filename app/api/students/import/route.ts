@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
       class: row['Class'] || row['class'] || null,
       pin: generateSecurePin(),
       pin_generated_at: new Date().toISOString(),
+      school_id: adminSession.schoolId,
       has_voted: false,
     }))
 

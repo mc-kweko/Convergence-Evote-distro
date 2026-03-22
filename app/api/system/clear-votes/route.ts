@@ -11,16 +11,18 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
-    await supabase.from('votes').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('votes').delete().eq('school_id', adminSession.schoolId)
     
     await supabase
       .from('students')
       .update({ has_voted: false, voted_at: null })
+      .eq('school_id', adminSession.schoolId)
       .neq('id', '00000000-0000-0000-0000-000000000000')
 
     await supabase
       .from('candidates')
       .update({ vote_count: 0 })
+      .eq('school_id', adminSession.schoolId)
       .neq('id', '00000000-0000-0000-0000-000000000000')
 
     return NextResponse.json({ success: true, message: 'Votes cleared successfully' })

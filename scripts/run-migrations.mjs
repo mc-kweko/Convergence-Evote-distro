@@ -40,6 +40,7 @@ async function runMigrations() {
     // Read migration files
     const schemaPath = path.join(__dirname, '01-create-schema.sql');
     const rlsPath = path.join(__dirname, '02-rls-policies.sql');
+    const multiTenantPath = path.join(__dirname, '03-multi-tenant-upgrade.sql');
 
     console.log('\nRunning schema migration...');
     const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
@@ -50,6 +51,11 @@ async function runMigrations() {
     const rlsSql = fs.readFileSync(rlsPath, 'utf-8');
     await client.query(rlsSql);
     console.log('✓ RLS policies applied');
+
+    console.log('\nRunning multi-tenant upgrade migration...');
+    const multiTenantSql = fs.readFileSync(multiTenantPath, 'utf-8');
+    await client.query(multiTenantSql);
+    console.log('✓ Multi-tenant upgrade completed');
 
     console.log('\n✓ All migrations completed successfully!');
   } catch (error) {

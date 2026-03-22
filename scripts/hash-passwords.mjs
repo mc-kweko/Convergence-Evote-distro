@@ -24,7 +24,7 @@ async function hashAdminPassword() {
       const { error: insertError } = await supabase
         .from('users')
         .insert({
-          email: 'admin@jinjacollege.edu',
+          email: 'admin@school.edu',
           password_hash: hashedPassword,
           role: 'chairperson_electoral_commission'
         });
@@ -32,7 +32,7 @@ async function hashAdminPassword() {
       if (insertError) throw insertError;
       
       console.log('✅ Default admin created successfully!');
-      console.log('Email: admin@jinjacollege.edu');
+      console.log('Email: admin@school.edu');
       console.log('Password: admin123');
       console.log('⚠️  CHANGE THIS PASSWORD IMMEDIATELY AFTER LOGIN!');
       return;
@@ -68,3 +68,4 @@ async function hashAdminPassword() {
 }
 
 hashAdminPassword();
+

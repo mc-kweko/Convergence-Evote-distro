@@ -22,17 +22,35 @@ export default function ResultsPage() {
   const [positions, setPositions] = useState<Position[]>([])
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
+  const [schoolId, setSchoolId] = useState<string>('')
 
   useEffect(() => {
+    const bootstrap = async () => {
+      try {
+        const res = await fetch('/api/auth/me')
+        if (!res.ok) return
+        const data = await res.json()
+        if (data?.user?.school_id) {
+          setSchoolId(data.user.school_id)
+        }
+      } catch (error) {
+        console.error('Failed to resolve school scope:', error)
+      }
+    }
+    bootstrap()
+  }, [])
+
+  useEffect(() => {
+    if (!schoolId) return
     fetchResults()
     const interval = setInterval(fetchResults, 5000) // Refresh every 5 seconds
     return () => clearInterval(interval)
-  }, [])
+  }, [schoolId])
 
   const fetchResults = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/results')
+      const res = await fetch(`/api/results?school_id=${encodeURIComponent(schoolId)}`)
       if (!res.ok) throw new Error('Failed to fetch results')
       const data = await res.json()
 
@@ -93,10 +111,10 @@ export default function ResultsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <img src="/Jinja College badge.png" alt="Jinja College" className="w-16 h-16 object-contain" />
+          <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-16 h-16 object-contain" />
           <div>
             <h1 className="text-3xl font-bold">Live Results</h1>
-            <p className="text-muted-foreground">Jinja College Electoral Commission</p>
+            <p className="text-muted-foreground">Convergence E-Vote</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -184,3 +202,5 @@ export default function ResultsPage() {
     </div>
   )
 }
+
+

@@ -23,6 +23,7 @@ export async function DELETE(
       .from('candidates')
       .delete()
       .eq('id', id)
+      .eq('school_id', adminSession.schoolId)
       .select()
 
     if (error) {
@@ -66,6 +67,7 @@ export async function PATCH(
       .from('candidates')
       .update({ name, student_id, manifesto })
       .eq('id', id)
+      .eq('school_id', adminSession.schoolId)
       .select()
       .single()
 

@@ -19,6 +19,7 @@ export async function DELETE(
       .from('students')
       .delete()
       .eq('id', id)
+      .eq('school_id', adminSession.schoolId)
 
     if (error) throw error
 

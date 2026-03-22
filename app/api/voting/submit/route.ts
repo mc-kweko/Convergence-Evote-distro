@@ -1,13 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { parseTimestampMs } from '@/lib/time'
 
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies()
     const voterId = cookieStore.get('voter_session')?.value
+    const schoolId = cookieStore.get('voter_school_id')?.value
 
-    if (!voterId) {
+    if (!voterId || !schoolId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
@@ -24,6 +26,7 @@ export async function POST(request: NextRequest) {
       .from('election_stats')
       .select('id, is_active, ended_at, students_voted, votes_cast')
       .eq('is_active', true)
+      .eq('school_id', schoolId)
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
@@ -34,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     // Validate time hasn't expired
     const now = Date.now()
-    const endTime = new Date(electionStatus.ended_at).getTime()
+    const endTime = parseTimestampMs(electionStatus.ended_at)
 
     if (now >= endTime) {
       // Auto-deactivate expired election
@@ -42,6 +45,7 @@ export async function POST(request: NextRequest) {
         .from('election_stats')
         .update({ is_active: false })
         .eq('id', electionStatus.id)
+        .eq('school_id', schoolId)
       
       return NextResponse.json({ error: 'Voting period has ended' }, { status: 403 })
     }
@@ -50,6 +54,7 @@ export async function POST(request: NextRequest) {
       .from('students')
       .select('id, has_voted')
       .eq('id', voterId)
+      .eq('school_id', schoolId)
       .single()
 
     if (studentError || !student) {
@@ -65,6 +70,7 @@ export async function POST(request: NextRequest) {
       .from('votes')
       .select('id')
       .eq('student_id', voterId)
+      .eq('school_id', schoolId)
       .limit(1)
 
     if (existingVotes && existingVotes.length > 0) {
@@ -75,15 +81,30 @@ export async function POST(request: NextRequest) {
       student_id: voterId,
       position_id: positionId,
       candidate_id: candidateId,
+      school_id: schoolId,
     }))
 
-    // Insert votes and update counts in parallel
-    const [voteResult, ...candidateUpdates] = await Promise.all([
-      supabase.from('votes').insert(voteRecords),
-      ...Object.values(votes).map((candidateId) =>
-        supabase.rpc('increment_vote_count', { candidate_id: candidateId })
+    const voteResult = await supabase.from('votes').insert(voteRecords)
+
+    // Apply deterministic increments after insert succeeds
+    if (!voteResult.error) {
+      await Promise.all(
+        Object.values(votes).map(async (candidateId) => {
+          const { data: candidate } = await supabase
+            .from('candidates')
+            .select('vote_count')
+            .eq('id', candidateId as string)
+            .eq('school_id', schoolId)
+            .single()
+
+          await supabase
+            .from('candidates')
+            .update({ vote_count: (candidate?.vote_count || 0) + 1 })
+            .eq('id', candidateId as string)
+            .eq('school_id', schoolId)
+        })
       )
-    ])
+    }
 
     if (voteResult.error) {
       console.error('Vote insertion error:', voteResult.error)
@@ -95,7 +116,9 @@ export async function POST(request: NextRequest) {
       supabase
         .from('students')
         .update({ has_voted: true, voted_at: new Date().toISOString() })
-        .eq('id', voterId),
+        .eq('id', voterId)
+        .eq('school_id', schoolId),
+
       supabase
         .from('election_stats')
         .update({ 
@@ -103,9 +126,12 @@ export async function POST(request: NextRequest) {
           votes_cast: electionStatus.votes_cast + Object.keys(votes).length
         })
         .eq('id', electionStatus.id)
+        .eq('school_id', schoolId)
     ])
 
     cookieStore.delete('voter_session')
+    cookieStore.delete('voter_school_id')
+    cookieStore.delete('voter_school_slug')
 
     return NextResponse.json({ success: true })
   } catch (error) {

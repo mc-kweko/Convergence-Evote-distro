@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     const { data: students, error: studentError } = await supabase
       .from('students')
       .select('id, student_id, name, pin')
+      .eq('school_id', adminSession.schoolId)
       .eq('has_voted', false)
 
     if (studentError) throw studentError

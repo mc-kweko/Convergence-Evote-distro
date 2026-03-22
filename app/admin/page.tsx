@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, LogIn } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import Link from 'next/link';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -51,10 +52,10 @@ export default function AdminLoginPage() {
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
-            <img src="/Jinja College badge.png" alt="Jinja College" className="w-24 h-24 object-contain" />
+            <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-24 h-24 object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Electoral Commission</h1>
-          <p className="text-slate-400">Jinja College Admin Dashboard</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Convergence E-Vote</h1>
+          <p className="text-slate-400">School Admin Console</p>
         </div>
 
         {/* Login Card */}
@@ -82,7 +83,7 @@ export default function AdminLoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@jinjacollege.edu"
+                  placeholder="admin@school.edu"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -120,16 +121,20 @@ export default function AdminLoginPage() {
               <p className="text-xs text-slate-400 text-center">
                 This is a secure admin-only system. Unauthorized access is prohibited.
               </p>
+              <p className="text-xs text-slate-400 text-center mt-3">
+                New school? <Link href="/admin/signup" className="underline">Create a school workspace</Link>
+              </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Footer Info */}
         <div className="mt-8 text-center text-sm text-slate-500 space-y-1">
-          <p>Built by Jinja College ICT Club</p>
-          <p>© {new Date().getFullYear()} Jinja College Electoral Commission</p>
+          <p>Built by Convergence Software</p>
+          <p>© {new Date().getFullYear()} Convergence E-Vote</p>
         </div>
       </div>
     </div>
   );
 }
+

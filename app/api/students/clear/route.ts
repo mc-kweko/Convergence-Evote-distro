@@ -14,6 +14,7 @@ export async function DELETE(request: NextRequest) {
     const { error } = await supabase
       .from('students')
       .delete()
+      .eq('school_id', adminSession.schoolId)
       .neq('id', '00000000-0000-0000-0000-000000000000')
 
     if (error) throw error
