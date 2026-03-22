@@ -47,13 +47,7 @@ export default function VotePage() {
           const newTime = Math.max(0, prev - 1)
           if (newTime === 0) {
             setVotingEnded(true)
-            // Auto-stop voting when time expires
-            fetch('/api/election', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'stop' })
-            }).catch(console.error)
-            
+
             // Log out voter and redirect
             alert('Voting period has ended. You will be logged out.')
             fetch('/api/voting/logout', { method: 'POST' })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,8 +49,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create session with no expiration (removed timeout)
-    const tokenHash = Buffer.from(`${user.id}-${Date.now()}-${Math.random()}`).toString('base64');
+    // Use a random, unguessable session token.
+    const tokenHash = crypto.randomBytes(48).toString('hex');
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
     const { error: sessionError } = await supabase
       .from('sessions')
@@ -58,7 +60,7 @@ export async function POST(request: NextRequest) {
         token_hash: tokenHash,
         ip_address: ipAddress,
         user_agent: request.headers.get('user-agent') || '',
-        expires_at: new Date('2099-12-31').toISOString(), // Far future date
+        expires_at: expiresAt,
       });
 
     if (sessionError) {
@@ -91,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set('admin_session_token', tokenHash, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',

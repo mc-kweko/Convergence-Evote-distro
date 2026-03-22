@@ -1,9 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateVotingCardsPdf } from '@/lib/pdf-generator'
+import { validateAdminSession } from '@/lib/admin-session'
 
 export async function POST(request: NextRequest) {
   try {
+    const adminSession = await validateAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = await createClient()
 
     const { data: students, error: studentError } = await supabase

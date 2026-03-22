@@ -1,16 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
 // This endpoint initializes the database schema
 // Should only be called once during setup
 
 export async function POST(req: NextRequest) {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: 'Endpoint disabled in production' }, { status: 403 });
+    }
+
+    const initToken = process.env.INIT_DB_TOKEN;
+    if (!initToken) {
+      return NextResponse.json({ error: 'Server not configured for db init endpoint' }, { status: 500 });
+    }
+
     // Verify this is called with proper auth
     const authHeader = req.headers.get('authorization');
     if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const providedToken = authHeader.slice('Bearer '.length).trim();
+    if (providedToken !== initToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -53,7 +65,7 @@ export async function POST(req: NextRequest) {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null })); // Ignore if already exists
+    }); // Ignore if already exists
 
     // Create students table
     const { error: studentsError } = await supabase.rpc('execute_sql', {
@@ -73,7 +85,7 @@ export async function POST(req: NextRequest) {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null }));
+    });
 
     // Create positions table
     const { error: positionsError } = await supabase.rpc('execute_sql', {
@@ -89,7 +101,7 @@ export async function POST(req: NextRequest) {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null }));
+    });
 
     // Create candidates table
     const { error: candidatesError } = await supabase.rpc('execute_sql', {
@@ -107,7 +119,7 @@ export async function POST(req: NextRequest) {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null }));
+    });
 
     // Create votes table
     const { error: votesError } = await supabase.rpc('execute_sql', {
@@ -122,7 +134,7 @@ export async function POST(req: NextRequest) {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null }));
+    });
 
     // Create audit_logs table
     const { error: auditError } = await supabase.rpc('execute_sql', {
@@ -138,7 +150,7 @@ export async function POST(req: NextRequest) {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null }));
+    });
 
     // Create results table
     const { error: resultsError } = await supabase.rpc('execute_sql', {
@@ -154,7 +166,7 @@ export async function POST(req: NextRequest) {
           last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null }));
+    });
 
     // Create sessions table
     const { error: sessionsError } = await supabase.rpc('execute_sql', {
@@ -170,7 +182,7 @@ export async function POST(req: NextRequest) {
           last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null }));
+    });
 
     // Create ballots table
     const { error: ballotsError } = await supabase.rpc('execute_sql', {
@@ -185,7 +197,7 @@ export async function POST(req: NextRequest) {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null }));
+    });
 
     // Create election_stats table
     const { error: statsError } = await supabase.rpc('execute_sql', {
@@ -203,7 +215,7 @@ export async function POST(req: NextRequest) {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
       `,
-    }).catch(() => ({ error: null }));
+    });
 
     return NextResponse.json({
       message: 'Database initialization completed',
@@ -217,3 +229,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+

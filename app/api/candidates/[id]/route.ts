@@ -1,15 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { validateAdminSession } from '@/lib/admin-session'
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const adminSession = await validateAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = await createClient()
     const { id } = await params
-
-    console.log('Attempting to delete candidate with ID:', id)
 
     if (!id || id === 'undefined') {
       return NextResponse.json({ error: 'Invalid candidate ID' }, { status: 400 })
@@ -20,8 +24,6 @@ export async function DELETE(
       .delete()
       .eq('id', id)
       .select()
-
-    console.log('Delete result:', { data, error })
 
     if (error) {
       console.error('Supabase delete error:', error)
@@ -50,6 +52,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const adminSession = await validateAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = await createClient()
     const { id } = await params
     const body = await request.json()

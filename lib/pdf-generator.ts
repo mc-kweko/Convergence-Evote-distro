@@ -64,12 +64,12 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
 
     // Add header
     doc.setFontSize(14)
-    doc.setFont(undefined, 'bold')
+    doc.setFont('helvetica', 'bold')
     doc.text('JINJA COLLEGE VOTING CARD', 105, yPosition + 15, { align: 'center' })
 
     // Add student info
     doc.setFontSize(10)
-    doc.setFont(undefined, 'normal')
+    doc.setFont('helvetica', 'normal')
     doc.text(`Name: ${card.name}`, 15, yPosition + 30)
     doc.text(`Student ID: ${card.studentId || 'N/A'}`, 15, yPosition + 38)
 
@@ -79,12 +79,12 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
 
     // Add PIN prominently
     doc.setFontSize(16)
-    doc.setFont(undefined, 'bold')
+    doc.setFont('helvetica', 'bold')
     doc.text(`PIN: ${card.pin}`, 15, yPosition + 48)
 
     // Add instructions
     doc.setFontSize(8)
-    doc.setFont(undefined, 'normal')
+    doc.setFont('helvetica', 'normal')
     doc.text('Scan QR code or visit voting portal', 15, yPosition + 54)
     doc.text('Keep this PIN confidential', 15, yPosition + 58)
     
@@ -127,7 +127,7 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
 
   // Header
   doc.setFontSize(18)
-  doc.setFont(undefined, 'bold')
+  doc.setFont('helvetica', 'bold')
   const pageWidth = doc.internal.pageSize.getWidth()
   const headerLine1 = 'ELECTORAL COMMISSION DECLARATION'
   const headerLine2 = 'OF RESULTS'
@@ -136,7 +136,7 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
 
   // Date and Poll Information
   doc.setFontSize(10)
-  doc.setFont(undefined, 'normal')
+  doc.setFont('helvetica', 'normal')
   doc.text(`Declaration Date: ${report.generatedAt.toLocaleDateString()}`, 20, 45)
   if (report.pollDate) {
     doc.text(`Poll Date: ${report.pollDate.toLocaleDateString()}`, 20, 50)
@@ -150,9 +150,9 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   doc.rect(20, yPosition, 170, 20)
   
   doc.setFontSize(9)
-  doc.setFont(undefined, 'bold')
+  doc.setFont('helvetica', 'bold')
   doc.text('ELECTION TURNOUT SUMMARY', 105, yPosition + 5, { align: 'center' })
-  doc.setFont(undefined, 'normal')
+  doc.setFont('helvetica', 'normal')
   const turnoutRate = report.totalEligibleVoters > 0 
     ? ((report.totalVotesCast / report.totalEligibleVoters) * 100).toFixed(1)
     : '0.0'
@@ -171,7 +171,7 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
 
     // Position title
     doc.setFontSize(12)
-    doc.setFont(undefined, 'bold')
+    doc.setFont('helvetica', 'bold')
     doc.text(position.title.toUpperCase(), 20, yPosition)
     yPosition += 7
 
@@ -193,7 +193,7 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
     doc.rect(170, yPosition, 20, 8) // Status
     
     doc.setFontSize(9)
-    doc.setFont(undefined, 'bold')
+    doc.setFont('helvetica', 'bold')
     doc.text('Rank', 27.5, yPosition + 5.5, { align: 'center' })
     doc.text('Candidate Name', 37, yPosition + 5.5)
     doc.text('Votes', 132.5, yPosition + 5.5, { align: 'center' })
@@ -202,7 +202,7 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
     yPosition += 8
 
     // Candidates rows
-    doc.setFont(undefined, 'normal')
+    doc.setFont('helvetica', 'normal')
     sorted.forEach((candidate, index) => {
       const percentage = totalVotes > 0 ? ((candidate.voteCount / totalVotes) * 100).toFixed(1) : '0.0'
       const isWinner = index === 0
@@ -227,9 +227,9 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
       doc.text(`${percentage}%`, 157.5, yPosition + 5, { align: 'center' })
       
       if (isWinner) {
-        doc.setFont(undefined, 'bold')
+        doc.setFont('helvetica', 'bold')
         doc.text('✓', 180, yPosition + 5, { align: 'center' })
-        doc.setFont(undefined, 'normal')
+        doc.setFont('helvetica', 'normal')
       }
       
       yPosition += 7
@@ -244,11 +244,11 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
     doc.rect(145, yPosition, 25, 7)
     doc.rect(170, yPosition, 20, 7)
     
-    doc.setFont(undefined, 'bold')
+    doc.setFont('helvetica', 'bold')
     doc.text('TOTAL', 37, yPosition + 5)
     doc.text(totalVotes.toString(), 132.5, yPosition + 5, { align: 'center' })
     doc.text('100.0%', 157.5, yPosition + 5, { align: 'center' })
-    doc.setFont(undefined, 'normal')
+    doc.setFont('helvetica', 'normal')
     
     yPosition += 15
   }
@@ -256,7 +256,7 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   // Signature section at bottom
   const bottomY = doc.internal.pageSize.getHeight() - 50
   doc.setFontSize(10)
-  doc.setFont(undefined, 'normal')
+  doc.setFont('helvetica', 'normal')
   doc.text('Approved by Chairperson, Electoral Commission', 20, bottomY)
   
   // Signature line
@@ -274,3 +274,4 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
 
   return Buffer.from(doc.output('arraybuffer'))
 }
+

@@ -1,14 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { validateAdminSession } from '@/lib/admin-session'
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
+    const adminSession = await validateAdminSession()
 
-    const { data: positions, error } = await supabase
+    let query = supabase
       .from('positions')
       .select('*')
       .order('created_at', { ascending: true })
+
+    if (!adminSession) {
+      query = query.eq('is_active', true)
+    }
+
+    const { data: positions, error } = await query
 
     if (error) throw error
 
@@ -21,6 +29,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const adminSession = await validateAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = await createClient()
     const body = await request.json()
     const { name, description, max_votes } = body

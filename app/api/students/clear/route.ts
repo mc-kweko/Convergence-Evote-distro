@@ -1,8 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { validateAdminSession } from '@/lib/admin-session'
 
 export async function DELETE(request: NextRequest) {
   try {
+    const adminSession = await validateAdminSession()
+    if (!adminSession) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = await createClient()
 
     const { error } = await supabase

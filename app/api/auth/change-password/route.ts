@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
+import { validateAdminSession } from '@/lib/admin-session'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,15 +22,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const sessionToken = request.cookies.get('admin_session_token')?.value
-    if (!sessionToken) {
+    const adminSession = await validateAdminSession()
+    if (!adminSession) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
     const { data: session } = await supabase
       .from('sessions')
       .select('user_id')
-      .eq('token_hash', sessionToken)
+      .eq('id', adminSession.sessionId)
+      .gt('expires_at', new Date().toISOString())
       .single()
 
     if (!session) {
