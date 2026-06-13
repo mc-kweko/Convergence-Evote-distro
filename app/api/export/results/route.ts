@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     }
 
     const pdfBuffer = await generateResultsPdf({
-      electionName: 'Convergence E-Vote',
+      electionName: 'Omicron School Vote',
       generatedAt: new Date(),
       pollDate: new Date(),
       totalEligibleVoters: totalEligibleVoters || 0,

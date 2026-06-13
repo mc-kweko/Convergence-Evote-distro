@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
           <div className="inline-flex items-center justify-center mb-4">
             <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-24 h-24 object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Convergence E-Vote</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Omicron School Vote</h1>
           <p className="text-slate-400">School Admin Console</p>
         </div>
 
@@ -122,7 +122,7 @@ export default function AdminLoginPage() {
                 This is a secure admin-only system. Unauthorized access is prohibited.
               </p>
               <p className="text-xs text-slate-400 text-center mt-3">
-                New school? <Link href="/admin/signup" className="underline">Create a school workspace</Link>
+                New school? <Link href="/admin/signup" className="underline">Register your school</Link>
               </p>
             </div>
           </CardContent>
@@ -131,7 +131,7 @@ export default function AdminLoginPage() {
         {/* Footer Info */}
         <div className="mt-8 text-center text-sm text-slate-500 space-y-1">
           <p>Built by Convergence Software</p>
-          <p>© {new Date().getFullYear()} Convergence E-Vote</p>
+          <p>© {new Date().getFullYear()} Omicron School Vote</p>
         </div>
       </div>
     </div>

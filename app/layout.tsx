@@ -7,10 +7,11 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Convergence E-Vote - Admin Dashboard',
-  description: 'Multi-school election platform for secure student voting',
+  title: 'Omicron School Vote',
+  description: 'Secure, simple, trusted school elections.',
   icons: {
     icon: '/Convergence%20Logo-distro.png',
+    shortcut: '/Convergence%20Logo-distro.png',
     apple: '/Convergence%20Logo-distro.png',
   },
 }

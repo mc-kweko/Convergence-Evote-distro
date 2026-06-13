@@ -65,7 +65,7 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
     // Add header
     doc.setFontSize(14)
     doc.setFont('helvetica', 'bold')
-    doc.text('CONVERGENCE E-VOTE CARD', 105, yPosition + 15, { align: 'center' })
+    doc.text('OMICRON SCHOOL VOTE — VOTING CARD', 105, yPosition + 15, { align: 'center' })
 
     // Add student info
     doc.setFontSize(10)
@@ -85,11 +85,9 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
     // Add instructions
     doc.setFontSize(8)
     doc.setFont('helvetica', 'normal')
-    doc.text('Scan QR code or visit voting portal', 15, yPosition + 54)
-    doc.text('Keep this PIN confidential', 15, yPosition + 58)
-    
-    // Add copyright at bottom center
-    doc.text(`\u00a9 ${new Date().getFullYear()} Convergence E-Vote`, 105, yPosition + 58, { align: 'center' })
+    doc.text('Scan QR code or visit the voting portal', 15, yPosition + 54)
+    doc.text('Keep this PIN confidential — do not share', 15, yPosition + 58)
+    doc.text(`\u00a9 ${new Date().getFullYear()} Omicron School Vote`, 105, yPosition + 58, { align: 'center' })
 
     cardIndex++
   }
@@ -99,7 +97,7 @@ export async function generateVotingCardsPdf(cards: VotingCard[]): Promise<Buffe
   const pageWidth = doc.internal.pageSize.getWidth()
   doc.setFontSize(7)
   doc.setTextColor(100, 100, 100)
-  doc.text(`Built by Convergence Software | \u00a9 ${new Date().getFullYear()} Convergence E-Vote`, pageWidth / 2, pageHeight - 5, { align: 'center' })
+  doc.text(`Omicron School Vote | \u00a9 ${new Date().getFullYear()} Omicron School Vote. All rights reserved.`, pageWidth / 2, pageHeight - 5, { align: 'center' })
 
   return Buffer.from(doc.output('arraybuffer'))
 }
@@ -129,8 +127,8 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   doc.setFontSize(18)
   doc.setFont('helvetica', 'bold')
   const pageWidth = doc.internal.pageSize.getWidth()
-  const headerLine1 = 'ELECTORAL COMMISSION DECLARATION'
-  const headerLine2 = 'OF RESULTS'
+  const headerLine1 = 'OMICRON SCHOOL VOTE'
+  const headerLine2 = 'ELECTORAL COMMISSION — OFFICIAL DECLARATION OF RESULTS'
   doc.text(headerLine1, pageWidth / 2, 20, { align: 'center' })
   doc.text(headerLine2, pageWidth / 2, 28, { align: 'center' })
 
@@ -269,8 +267,8 @@ export async function generateResultsPdf(report: ResultsReport): Promise<Buffer>
   const footerY = doc.internal.pageSize.getHeight() - 15
   doc.setFontSize(8)
   doc.setTextColor(100, 100, 100)
-  doc.text('Built by Convergence Software', pageWidth / 2, footerY, { align: 'center' })
-  doc.text(`\u00a9 ${new Date().getFullYear()} Convergence E-Vote. All rights reserved.`, pageWidth / 2, footerY + 4, { align: 'center' })
+  doc.text('Omicron School Vote', pageWidth / 2, footerY, { align: 'center' })
+  doc.text(`\u00a9 ${new Date().getFullYear()} Omicron School Vote. All rights reserved.`, pageWidth / 2, footerY + 4, { align: 'center' })
 
   return Buffer.from(doc.output('arraybuffer'))
 }

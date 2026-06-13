@@ -179,21 +179,35 @@ CREATE TABLE IF NOT EXISTS recount_logs (
 -- ============================================
 -- INDEXES
 -- ============================================
-CREATE INDEX idx_students_student_id ON students(student_id);
-CREATE INDEX idx_students_pin ON students(pin);
-CREATE INDEX idx_students_has_voted ON students(has_voted);
-CREATE INDEX idx_votes_student_id ON votes(student_id);
-CREATE INDEX idx_votes_candidate_id ON votes(candidate_id);
-CREATE INDEX idx_votes_position_id ON votes(position_id);
-CREATE INDEX idx_votes_vote_hash ON votes(vote_hash);
-CREATE INDEX idx_candidates_position_id ON candidates(position_id);
-CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
-CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
-CREATE INDEX idx_results_candidate_id ON results(candidate_id);
-CREATE INDEX idx_results_position_id ON results(position_id);
-CREATE INDEX idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
-CREATE INDEX idx_ballots_student_id ON ballots(student_id);
+CREATE INDEX IF NOT EXISTS idx_students_student_id ON students(student_id);
+
+CREATE INDEX IF NOT EXISTS idx_students_pin ON students(pin);
+
+CREATE INDEX IF NOT EXISTS idx_students_has_voted ON students(has_voted);
+
+CREATE INDEX IF NOT EXISTS idx_votes_student_id ON votes(student_id);
+
+CREATE INDEX IF NOT EXISTS idx_votes_candidate_id ON votes(candidate_id);
+
+CREATE INDEX IF NOT EXISTS idx_votes_position_id ON votes(position_id);
+
+CREATE INDEX IF NOT EXISTS idx_votes_vote_hash ON votes(vote_hash);
+
+CREATE INDEX IF NOT EXISTS idx_candidates_position_id ON candidates(position_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_results_candidate_id ON results(candidate_id);
+
+CREATE INDEX IF NOT EXISTS idx_results_position_id ON results(position_id);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+
+CREATE INDEX IF NOT EXISTS idx_ballots_student_id ON ballots(student_id);
+
 
 -- ============================================
 -- UPDATE TIMESTAMPS TRIGGER
@@ -206,8 +220,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_students_updated_at ON students;
 CREATE TRIGGER update_students_updated_at BEFORE UPDATE ON students FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_positions_updated_at ON positions;
 CREATE TRIGGER update_positions_updated_at BEFORE UPDATE ON positions FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_candidates_updated_at ON candidates;
 CREATE TRIGGER update_candidates_updated_at BEFORE UPDATE ON candidates FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_election_stats_updated_at ON election_stats;
 CREATE TRIGGER update_election_stats_updated_at BEFORE UPDATE ON election_stats FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+

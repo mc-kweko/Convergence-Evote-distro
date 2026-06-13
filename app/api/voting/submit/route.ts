@@ -1,9 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { parseTimestampMs } from '@/lib/time'
+import { generateVoteHash } from '@/lib/security'
+import { z } from 'zod'
+
+const SubmitSchema = z.object({
+  votes: z.record(z.string().uuid(), z.string().uuid()),
+})
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
+
   try {
     const cookieStore = await cookies()
     const voterId = cookieStore.get('voter_session')?.value
@@ -13,129 +20,64 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    const { votes } = await request.json()
+    const body = await request.json()
+    const parsed = SubmitSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid vote data' }, { status: 400 })
+    }
+    const { votes } = parsed.data
 
-    if (!votes || Object.keys(votes).length === 0) {
+    if (Object.keys(votes).length === 0) {
       return NextResponse.json({ error: 'No votes provided' }, { status: 400 })
     }
 
     const supabase = await createClient()
 
-    // Check if election is still active with time validation
-    const { data: electionStatus } = await supabase
-      .from('election_stats')
-      .select('id, is_active, ended_at, students_voted, votes_cast')
-      .eq('is_active', true)
-      .eq('school_id', schoolId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+    // Application-level receipt hash generation
+    const timestamp = new Date().toISOString()
+    const candidateIds = Object.values(votes)
+    const voteHash = generateVoteHash(voterId, candidateIds, timestamp)
 
-    if (!electionStatus) {
-      return NextResponse.json({ error: 'Voting is not currently active' }, { status: 403 })
+    const { data, error } = await supabase.rpc('submit_votes_atomic', {
+      p_school_id: schoolId,
+      p_student_id: voterId,
+      p_votes: votes,
+      p_vote_hash: voteHash,
+      p_receipt_created_at: new Date(timestamp).toISOString(),
+      p_ip_address: ip,
+    })
+
+    if (error) {
+      console.error('[omicron] submit_votes_atomic rpc error:', error)
+      return NextResponse.json({ error: 'Failed to submit votes. Please try again.' }, { status: 500 })
     }
 
-    // Validate time hasn't expired
-    const now = Date.now()
-    const endTime = parseTimestampMs(electionStatus.ended_at)
-
-    if (now >= endTime) {
-      // Auto-deactivate expired election
-      await supabase
-        .from('election_stats')
-        .update({ is_active: false })
-        .eq('id', electionStatus.id)
-        .eq('school_id', schoolId)
-      
-      return NextResponse.json({ error: 'Voting period has ended' }, { status: 403 })
+    const row = Array.isArray(data) ? data[0] : data
+    if (!row?.success) {
+      const code = row?.error_code || 'SUBMIT_FAILED'
+      // Map DB codes to user-safe messages
+      if (code === 'STUDENT_ALREADY_VOTED') {
+        return NextResponse.json({ error: 'You have already voted.' }, { status: 403 })
+      }
+      if (code === 'ELECTION_ENDED' || code === 'ELECTION_INACTIVE') {
+        return NextResponse.json({ error: 'Voting is not currently active.' }, { status: 403 })
+      }
+      if (code === 'INVALID_SELECTION') {
+        return NextResponse.json({ error: 'Invalid candidate selection.' }, { status: 400 })
+      }
+      return NextResponse.json({ error: 'Failed to submit votes. Please try again.' }, { status: 500 })
     }
 
-    const { data: student, error: studentError } = await supabase
-      .from('students')
-      .select('id, has_voted')
-      .eq('id', voterId)
-      .eq('school_id', schoolId)
-      .single()
-
-    if (studentError || !student) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
-    }
-
-    if (student.has_voted) {
-      return NextResponse.json({ error: 'Already voted' }, { status: 403 })
-    }
-
-    // Check for existing votes (duplicate prevention)
-    const { data: existingVotes } = await supabase
-      .from('votes')
-      .select('id')
-      .eq('student_id', voterId)
-      .eq('school_id', schoolId)
-      .limit(1)
-
-    if (existingVotes && existingVotes.length > 0) {
-      return NextResponse.json({ error: 'Duplicate vote detected' }, { status: 403 })
-    }
-
-    const voteRecords = Object.entries(votes).map(([positionId, candidateId]) => ({
-      student_id: voterId,
-      position_id: positionId,
-      candidate_id: candidateId,
-      school_id: schoolId,
-    }))
-
-    const voteResult = await supabase.from('votes').insert(voteRecords)
-
-    // Apply deterministic increments after insert succeeds
-    if (!voteResult.error) {
-      await Promise.all(
-        Object.values(votes).map(async (candidateId) => {
-          const { data: candidate } = await supabase
-            .from('candidates')
-            .select('vote_count')
-            .eq('id', candidateId as string)
-            .eq('school_id', schoolId)
-            .single()
-
-          await supabase
-            .from('candidates')
-            .update({ vote_count: (candidate?.vote_count || 0) + 1 })
-            .eq('id', candidateId as string)
-            .eq('school_id', schoolId)
-        })
-      )
-    }
-
-    if (voteResult.error) {
-      console.error('Vote insertion error:', voteResult.error)
-      return NextResponse.json({ error: 'Failed to record votes' }, { status: 500 })
-    }
-
-    // Update student and election stats in parallel
-    await Promise.all([
-      supabase
-        .from('students')
-        .update({ has_voted: true, voted_at: new Date().toISOString() })
-        .eq('id', voterId)
-        .eq('school_id', schoolId),
-
-      supabase
-        .from('election_stats')
-        .update({ 
-          students_voted: electionStatus.students_voted + 1,
-          votes_cast: electionStatus.votes_cast + Object.keys(votes).length
-        })
-        .eq('id', electionStatus.id)
-        .eq('school_id', schoolId)
-    ])
-
+    // Clear voter session immediately (after DB accepted vote)
     cookieStore.delete('voter_session')
     cookieStore.delete('voter_school_id')
     cookieStore.delete('voter_school_slug')
 
-    return NextResponse.json({ success: true })
+
+    return NextResponse.json({ success: true, voteHash })
   } catch (error) {
-    console.error('Vote submission error:', error)
-    return NextResponse.json({ error: 'Failed to submit votes' }, { status: 500 })
+    console.error('[omicron] Vote submission error:', error)
+    return NextResponse.json({ error: 'Failed to submit votes. Please try again.' }, { status: 500 })
   }
 }
+

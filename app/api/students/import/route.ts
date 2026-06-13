@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as XLSX from 'xlsx'
 import { generateSecurePin } from '@/lib/security'
 import { validateAdminSession } from '@/lib/admin-session'
+import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,17 +29,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No data found in file' }, { status: 400 })
     }
 
-    const students = data.map((row: any) => ({
-      student_id: row['Student ID'] || row['student_id'] || row['ID'] || row['id'] || '',
-      name: row['Student Name'] || row['Name'] || row['name'],
-      email: row['Email'] || row['email'] || null,
-      phone: row['Phone'] || row['phone'] || null,
-      class: row['Class'] || row['class'] || null,
-      pin: generateSecurePin(),
-      pin_generated_at: new Date().toISOString(),
-      school_id: adminSession.schoolId,
-      has_voted: false,
-    }))
+    const students = await Promise.all(
+      data.map(async (row: any) => {
+        const plainPin = generateSecurePin()
+        const pinHash = await bcrypt.hash(plainPin, 10)
+        return {
+          student_id: row['Student ID'] || row['student_id'] || row['ID'] || row['id'] || '',
+          name: row['Student Name'] || row['Name'] || row['name'],
+          email: row['Email'] || row['email'] || null,
+          phone: row['Phone'] || row['phone'] || null,
+          class: row['Class'] || row['class'] || null,
+          pin: plainPin,       // kept temporarily for printing voting cards
+          pin_hash: pinHash,   // bcrypt hash — used for login verification
+          pin_generated_at: new Date().toISOString(),
+          school_id: adminSession.schoolId,
+          has_voted: false,
+        }
+      })
+    )
 
     const validStudents = students.filter((s: any) => s.name)
 

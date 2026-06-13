@@ -72,17 +72,19 @@ export async function POST(req: NextRequest) {
       sql: `
         CREATE TABLE IF NOT EXISTS students (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          student_id VARCHAR(50) UNIQUE NOT NULL,
+          school_id UUID NOT NULL,
+          student_id VARCHAR(50) NOT NULL,
           name VARCHAR(255) NOT NULL,
           email VARCHAR(255),
           phone VARCHAR(20),
           class VARCHAR(100),
-          pin VARCHAR(50) UNIQUE,
+          pin VARCHAR(50),
           pin_generated_at TIMESTAMP,
           has_voted BOOLEAN DEFAULT FALSE,
           voted_at TIMESTAMP,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT students_student_id_school_unique UNIQUE (school_id, student_id)
         );
       `,
     });
@@ -126,6 +128,7 @@ export async function POST(req: NextRequest) {
       sql: `
         CREATE TABLE IF NOT EXISTS votes (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          school_id UUID NOT NULL,
           student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
           candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
           position_id UUID NOT NULL REFERENCES positions(id) ON DELETE CASCADE,
@@ -204,6 +207,7 @@ export async function POST(req: NextRequest) {
       sql: `
         CREATE TABLE IF NOT EXISTS election_stats (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          school_id UUID NOT NULL,
           total_students INTEGER DEFAULT 0,
           students_voted INTEGER DEFAULT 0,
           votes_cast INTEGER DEFAULT 0,
@@ -213,6 +217,18 @@ export async function POST(req: NextRequest) {
           is_active BOOLEAN DEFAULT FALSE,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `,
+    });
+
+    // Create voter_receipts table (used by Omicron atomic voting RPC)
+    const { error: receiptsError } = await supabase.rpc('execute_sql', {
+      sql: `
+        CREATE TABLE IF NOT EXISTS voter_receipts (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          vote_hash TEXT UNIQUE NOT NULL,
+          school_id UUID NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
       `,
     });

@@ -10,7 +10,7 @@ function createWindow() {
     minWidth: 1100,
     minHeight: 700,
     backgroundColor: '#0b1220',
-    title: 'Convergence E-Vote Admin',
+    title: 'Omicron School Vote Admin',
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

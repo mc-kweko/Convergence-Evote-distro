@@ -1,10 +1,25 @@
 import crypto from 'crypto'
 
 /**
- * Generate a secure 8-digit PIN
+ * Generate a secure 8-digit PIN (plain text — for printing on voting cards).
+ * The plain PIN is NEVER stored in the database; only pin_hash is stored.
  */
 export function generateSecurePin(): string {
   return crypto.randomInt(10000000, 99999999).toString()
+}
+
+/**
+ * Generate a tamper-evident vote hash.
+ * Hash: SHA-256(studentId + candidateIds + timestamp + VOTE_HASH_SECRET)
+ */
+export function generateVoteHash(
+  studentId: string,
+  candidateIds: string[],
+  timestamp: string
+): string {
+  const secret = process.env.VOTE_HASH_SECRET || 'omicron-vote-default-secret'
+  const payload = [studentId, ...candidateIds.sort(), timestamp, secret].join('|')
+  return crypto.createHash('sha256').update(payload).digest('hex')
 }
 
 /**

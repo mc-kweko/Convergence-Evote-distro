@@ -90,7 +90,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-10 h-10 object-contain" />
-            {sidebarOpen && <h2 className="text-xl font-bold">E-Vote Admin</h2>}
+            {sidebarOpen && <h2 className="text-xl font-bold">Omicron Admin</h2>}
           </div>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -135,7 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="bg-background border-b border-border p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-8 h-8 object-contain" />
-            <h1 className="text-sm text-muted-foreground">Convergence E-Vote School Admin Console</h1>
+            <h1 className="text-sm text-muted-foreground">Omicron School Vote — Admin Console</h1>
           </div>
           {mounted && (
             <Button

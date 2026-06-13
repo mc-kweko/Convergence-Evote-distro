@@ -98,8 +98,9 @@ export default function DashboardPage() {
       <div className="flex items-center gap-4 mb-6">
         <img src="/Convergence%20Logo-distro.png" alt="Convergence E-Vote" className="w-16 h-16 object-contain" />
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Convergence E-Vote Admin Portal</p>
+          <h1 className="text-3xl font-bold">Omicron School Vote</h1>
+          <p className="text-2xl font-semibold text-muted-foreground">Dashboard</p>
+          <p className="text-muted-foreground">Omicron School Vote Admin Portal</p>
         </div>
       </div>
 
